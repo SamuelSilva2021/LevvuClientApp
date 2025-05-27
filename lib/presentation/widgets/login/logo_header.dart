@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:levvu_client/core/constants/app_colors.dart';
 import 'package:levvu_client/core/constants/app_strings.dart';
+import 'package:levvu_client/core/constants/asset_constants.dart';
 
 class LogoHeader extends StatelessWidget {
   const LogoHeader({super.key});
@@ -10,28 +11,17 @@ class LogoHeader extends StatelessWidget {
     return Center(
       child: Column(
         children: [
-          Container(
-            width: 100,
-            height: 100,
-            decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              Icons.local_shipping_outlined,
-              size: 60,
-              color: AppColors.primary,
+          ClipRRect(
+            borderRadius: BorderRadius.circular(50),
+            child: Image.asset(
+              AssetConstants.logo,
+              width: 100,
+              height: 100,
+              fit: BoxFit.contain,
+              colorBlendMode: BlendMode.srcOver,
             ),
           ),
-          const SizedBox(height: 24),
-          Text(
-            AppStrings.appTitle,
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              color: AppColors.primary,
-            ),
-          ),
+          const SizedBox(height: 24),         
           const SizedBox(height: 8),
           Text(
             AppStrings.appSubtitle,
