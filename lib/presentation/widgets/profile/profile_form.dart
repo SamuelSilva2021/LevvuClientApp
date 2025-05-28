@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:levvu_client/core/constants/app_colors.dart';
 
 class ProfileForm extends StatelessWidget {
+  final GlobalKey<FormState> formKey;
   final TextEditingController nomeController;
   final TextEditingController emailController;
   final TextEditingController telefoneController;
@@ -17,6 +18,7 @@ class ProfileForm extends StatelessWidget {
 
   const ProfileForm({
     super.key,
+    required this.formKey,
     required this.nomeController,
     required this.emailController,
     required this.telefoneController,
@@ -37,6 +39,7 @@ class ProfileForm extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
+          key: formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [

@@ -90,6 +90,7 @@ class _PerfilUsuarioPageState extends State<PerfilUsuarioPage> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : ProfileForm(
+              formKey: _formKey,
               nomeController: _nomeController,
               emailController: _emailController,
               telefoneController: _telefoneController,

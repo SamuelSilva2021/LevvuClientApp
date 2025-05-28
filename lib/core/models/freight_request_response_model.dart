@@ -11,7 +11,14 @@ class FreightRequestResponse {
   final String serviceType;
   final DateTime withdrawalDate;
   final TimeOfDay? pickupTime;
-  final List<String> photoUrls;
+  final String? itemDescription;
+  final bool? helpLoading;
+  final bool? disassemblyAssembly;
+  final bool? specialPackaging;
+  final String? observations;
+  final List<String>? photoUrls;
+  final int? partnerId;
+  final double? agreedValue;
 
   FreightRequestResponse({
     required this.id,
@@ -24,7 +31,14 @@ class FreightRequestResponse {
     required this.serviceType,
     required this.withdrawalDate,
     this.pickupTime,
-    required this.photoUrls,
+    this.itemDescription,
+    this.helpLoading,
+    this.disassemblyAssembly,
+    this.specialPackaging,
+    this.observations,
+    this.photoUrls,
+    this.partnerId,
+    this.agreedValue,
   });
 
   factory FreightRequestResponse.fromJson(Map<String, dynamic> json) {
@@ -38,10 +52,22 @@ class FreightRequestResponse {
       deliveryAddress: json['deliveryAddress'],
       serviceType: json['serviceType'],
       withdrawalDate: DateTime.parse(json['withdrawalDate']),
-      pickupTime: json['pickupTime'] != null ? _parseTimeFromJson(json['pickupTime']) : null,
-      photoUrls: List<String>.from(json['photoUrls']),
+      pickupTime: json['pickupTime'] != null
+          ? _parseTimeFromJson(json['pickupTime'])
+          : null,
+      itemDescription: json['itemDescription'],
+      helpLoading: json['helpLoading'],
+      disassemblyAssembly: json['disassemblyAssembly'],
+      specialPackaging: json['specialPackaging'],
+      observations: json['observations'],
+      photoUrls: json['photoUrls'] != null
+          ? List<String>.from(json['photoUrls'])
+          : null,
+      partnerId: json['partnerId'],
+      agreedValue: json['agreedValue']?.toDouble(),
     );
   }
+
   static TimeOfDay _parseTimeFromJson(String timeString) {
     try {
       final parts = timeString.split(':');
@@ -51,13 +77,18 @@ class FreightRequestResponse {
           minute: int.parse(parts[1]),
         );
       }
-      return const TimeOfDay(hour: 0, minute: 0); 
+      return const TimeOfDay(hour: 0, minute: 0);
     } catch (e) {
-      return const TimeOfDay(hour: 0, minute: 0); 
+      return const TimeOfDay(hour: 0, minute: 0);
     }
   }
-  
+
   String get pickupTimeFormatted {
     return '${pickupTime?.hour.toString().padLeft(2, '0')}:${pickupTime?.minute.toString().padLeft(2, '0')}';
+  }
+
+  String get agreedValueFormatted {
+    if (agreedValue == null) return 'R\$ --,--';
+    return 'R\$ ${agreedValue!.toStringAsFixed(2).replaceAll('.', ',')}';
   }
 }
