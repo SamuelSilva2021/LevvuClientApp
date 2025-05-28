@@ -79,68 +79,7 @@ class FreightCard extends StatelessWidget {
             ),
             const SizedBox(height: 8),
 
-            // Parceiro e valor
-            _buildInfoRow(
-              Icons.person_outline,
-              'Parceiro:',
-              freight['parceiro'],
-            ),
-            const SizedBox(height: 8),
-            _buildInfoRow(
-              Icons.attach_money_outlined,
-              'Valor:',
-              freight['valor'],
-            ),
-            const SizedBox(height: 8),
-
-            // Descrição e serviços adicionais
-            if (freight['descricao']?.isNotEmpty ?? false) ...[
-              _buildInfoRow(
-                Icons.description_outlined,
-                'Descrição:',
-                freight['descricao'],
-              ),
-              const SizedBox(height: 8),
-            ],
-
-            // Serviços adicionais
-            if ((freight['ajudaCarregamento'] ?? false) ||
-                (freight['desmontagem'] ?? false) ||
-                (freight['embalagemEspecial'] ?? false)) ...[
-              Text(
-                'Serviços Adicionais:',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 4),
-              if (freight['ajudaCarregamento'] ?? false)
-                _buildServiceItem('Ajuda no carregamento'),
-              if (freight['desmontagem'] ?? false)
-                _buildServiceItem('Desmontagem/Montagem'),
-              if (freight['embalagemEspecial'] ?? false)
-                _buildServiceItem('Embalagem especial'),
-              const SizedBox(height: 8),
-            ],
-
-            // Observações
-            if (freight['observacoes']?.isNotEmpty ?? false) ...[
-              _buildInfoRow(
-                Icons.note_outlined,
-                'Observações:',
-                freight['observacoes'],
-              ),
-              const SizedBox(height: 8),
-            ],
-
-            // Status da proposta
-            _buildInfoRow(
-              Icons.description_outlined,
-              'Status da Proposta:',
-              _mapProposalStatus(freight['statusProposta']),
-            ),
-
+            
             // Avaliação
             if (freight['status'] == 'Concluído') ...[
               const SizedBox(height: 8),
