@@ -87,7 +87,7 @@ class _HistoricoFretesPageState extends State<HistoricoFretesPage>
 
                       // Aba Em andamento
                       fretesPendentes.isEmpty
-                          ? EmptyFreights(
+                          ? const EmptyFreights(
                               title: 'Nenhum frete em andamento',
                               subtitle:
                                   'Suas solicitações em andamento aparecerão aqui',
@@ -96,7 +96,7 @@ class _HistoricoFretesPageState extends State<HistoricoFretesPage>
 
                       // Aba Concluídos
                       fretesConcluidos.isEmpty
-                          ? EmptyFreights(
+                          ? const EmptyFreights(
                               title: 'Nenhum frete concluído',
                               subtitle:
                                   'Seu histórico de fretes concluídos aparecerá aqui',
