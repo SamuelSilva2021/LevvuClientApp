@@ -4,9 +4,15 @@ import 'package:levvu_client/core/models/freight_request_response_model.dart';
 import 'package:levvu_client/core/services/api/api_service.dart';
 import 'package:levvu_client/presentation/widgets/freight/freight_card.dart';
 import 'package:levvu_client/presentation/widgets/freight/empty_freights.dart';
+import 'package:levvu_client/presentation/pages/detalhes_frete_page.dart';
 
 class HistoricoFretesPage extends StatefulWidget {
-  const HistoricoFretesPage({super.key});
+  final int initialTabIndex;
+
+  const HistoricoFretesPage({
+    super.key,
+    this.initialTabIndex = 0,
+  });
 
   @override
   State<HistoricoFretesPage> createState() => _HistoricoFretesPageState();
@@ -22,7 +28,11 @@ class _HistoricoFretesPageState extends State<HistoricoFretesPage>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(
+      length: 3,
+      vsync: this,
+      initialIndex: widget.initialTabIndex,
+    );
     _loadFreights();
   }
 
@@ -107,7 +117,12 @@ class _HistoricoFretesPageState extends State<HistoricoFretesPage>
         return FreightCard(
           freight: frete,
           onViewDetails: () {
-            // Implementar visualização detalhada
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => DetalhesFretePage(freight: frete),
+              ),
+            );
           },
           onRepeat: frete['status'] == 'Concluído'
               ? () {
@@ -155,12 +170,22 @@ class _HistoricoFretesPageState extends State<HistoricoFretesPage>
         'origem': frete.pickupAddress,
         'destino': frete.deliveryAddress,
         'data': _formatDate(frete.withdrawalDate.toString()),
-        'hora': _formatTime(frete.pickupTime!),
+        'hora':
+            frete.pickupTime != null ? _formatTime(frete.pickupTime!) : '--:--',
         'tipo': frete.serviceType,
         'status': _mapStatus(frete.status),
-        'valor': 'R\$ --,--',
-        'parceiro': 'Parceiro não especificado',
+        'valor': frete.agreedValueFormatted,
+        'parceiro': frete.partnerId != null
+            ? 'Parceiro #${frete.partnerId}'
+            : 'Parceiro não especificado',
         'avaliacao': 5,
+        'descricao': frete.itemDescription ?? '',
+        'ajudaCarregamento': frete.helpLoading ?? false,
+        'desmontagem': frete.disassemblyAssembly ?? false,
+        'embalagemEspecial': frete.specialPackaging ?? false,
+        'observacoes': frete.observations ?? '',
+        'fotos': frete.photoUrls ?? [],
+        'statusProposta': frete.proposalStatus,
       };
     }).toList();
   }

@@ -178,7 +178,13 @@ class HomeContent extends StatelessWidget {
             OngoingShipmentsSection(
               shipments: ongoingShipments,
               onViewAll: () {
-                // Implementar navegação para ver todos os fretes
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const HistoricoFretesPage(
+                      initialTabIndex: 1, // Aba "Em andamento"
+                    ),
+                  ),
+                );
               },
             ),
             const SizedBox(height: 24),
@@ -187,7 +193,11 @@ class HomeContent extends StatelessWidget {
             RecentProposalsSection(
               proposals: recentProposals,
               onViewAll: () {
-                // Implementar navegação para ver todas as propostas
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const VisualizacaoPropostasPage(),
+                  ),
+                );
               },
             ),
             const SizedBox(height: 24),

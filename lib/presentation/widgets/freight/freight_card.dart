@@ -91,6 +91,55 @@ class FreightCard extends StatelessWidget {
               'Valor:',
               freight['valor'],
             ),
+            const SizedBox(height: 8),
+
+            // Descrição e serviços adicionais
+            if (freight['descricao']?.isNotEmpty ?? false) ...[
+              _buildInfoRow(
+                Icons.description_outlined,
+                'Descrição:',
+                freight['descricao'],
+              ),
+              const SizedBox(height: 8),
+            ],
+
+            // Serviços adicionais
+            if ((freight['ajudaCarregamento'] ?? false) ||
+                (freight['desmontagem'] ?? false) ||
+                (freight['embalagemEspecial'] ?? false)) ...[
+              Text(
+                'Serviços Adicionais:',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 4),
+              if (freight['ajudaCarregamento'] ?? false)
+                _buildServiceItem('Ajuda no carregamento'),
+              if (freight['desmontagem'] ?? false)
+                _buildServiceItem('Desmontagem/Montagem'),
+              if (freight['embalagemEspecial'] ?? false)
+                _buildServiceItem('Embalagem especial'),
+              const SizedBox(height: 8),
+            ],
+
+            // Observações
+            if (freight['observacoes']?.isNotEmpty ?? false) ...[
+              _buildInfoRow(
+                Icons.note_outlined,
+                'Observações:',
+                freight['observacoes'],
+              ),
+              const SizedBox(height: 8),
+            ],
+
+            // Status da proposta
+            _buildInfoRow(
+              Icons.description_outlined,
+              'Status da Proposta:',
+              _mapProposalStatus(freight['statusProposta']),
+            ),
 
             // Avaliação
             if (freight['status'] == 'Concluído') ...[
@@ -240,5 +289,43 @@ class FreightCard extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  Widget _buildServiceItem(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 28, bottom: 4),
+      child: Row(
+        children: [
+          Icon(
+            Icons.check_circle_outline,
+            size: 16,
+            color: AppColors.primary,
+          ),
+          const SizedBox(width: 8),
+          Text(
+            text,
+            style: TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 14,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _mapProposalStatus(String status) {
+    switch (status) {
+      case 'Pending':
+        return 'Pendente';
+      case 'Accepted':
+        return 'Aceita';
+      case 'Rejected':
+        return 'Rejeitada';
+      case 'Cancelled':
+        return 'Cancelada';
+      default:
+        return status;
+    }
   }
 }
