@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:levvu_client/core/constants/app_strings.dart';
 import 'package:levvu_client/core/controllers/login_controller.dart';
-import 'package:levvu_client/core/utils/validators.dart';
-import 'package:levvu_client/presentation/components/logo_header.dart';
-import 'package:levvu_client/presentation/widgets/custom_text_field.dart';
+import 'package:levvu_client/presentation/widgets/login/logo_header.dart';
 import 'package:levvu_client/presentation/widgets/primary_button.dart';
+import 'package:levvu_client/presentation/widgets/login/login_options_row.dart';
+import 'package:levvu_client/presentation/widgets/login/create_account_footer.dart';
+import 'package:levvu_client/presentation/widgets/login/login_form.dart';
 import 'package:provider/provider.dart';
 
 class LoginPage extends StatefulWidget {
@@ -21,7 +22,6 @@ class _LoginPageState extends State<LoginPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
-  bool _obscurePassword = true;
   bool _rememberMe = false;
 
   late LoginController _loginController;
@@ -37,83 +37,47 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-
     return ScaffoldMessenger(
       key: _scaffoldKey,
       child: Scaffold(
         body: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              children: [
-                const SizedBox(height: 60),
-                const LogoHeader(),
-                const SizedBox(height: 48),
-                CustomTextField(
-                  controller: _emailController,
-                  labelText: AppStrings.emailLabel,
-                  hintText: AppStrings.emailHint,
-                  prefixIcon: Icons.email_outlined,
-                  keyboardType: TextInputType.emailAddress,
-                  validator: (value) => Validators.validateEmail(value),
-                ),
-                const SizedBox(height: 16),
-                CustomTextField(
-                  controller: _passwordController,
-                  labelText: AppStrings.passwordLabel,
-                  hintText: AppStrings.passwordHint,
-                  prefixIcon: Icons.lock_outline,
-                  obscureText: _obscurePassword,
-                  suffixIcon: _obscurePassword
-                      ? Icons.visibility_outlined
-                      : Icons.visibility_off_outlined,
-                  onSuffixIconPressed: () =>
-                      setState(() => _obscurePassword = !_obscurePassword),
-                  validator: (value) => Validators.validatePassword(value),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Checkbox(
-                      value: _rememberMe,
-                      onChanged: (value) =>
-                          setState(() => _rememberMe = value ?? false),
-                    ),
-                    const Text(AppStrings.rememberMe),
-                    const Spacer(),
-                    TextButton(
-                      onPressed: () {},
-                      child: Text(AppStrings.forgotPassword),
-                    )
-                  ],
-                ),
-                const SizedBox(height: 24),
-                //Fará a reconstrução somente do botão
-                Selector<LoginController, bool>(
-                  selector: (_, controller) => controller.isLoading,
-                  builder: (_, isLoading, __) {
-                    return PrimaryButton(
-                      label: AppStrings.login,
-                      onPressed: isLoading ? null : _login,
-                      isLoading: isLoading,
-                    );
-                  },
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text(AppStrings.noAccount),
-                    TextButton(
-                      onPressed: () =>
-                          Navigator.of(context).pushNamed('/cadastro'),
-                      child: const Text(AppStrings.createAccount),
-                    ),
-                  ],
-                )
-              ],
-            ),
+          child: Column(
+            children: [
+              const SizedBox(height: 120),
+              const LogoHeader(),
+              const SizedBox(height: 48),
+              LoginForm(
+                formKey: _formKey,
+                emailController: _emailController,
+                passwordController: _passwordController,
+              ),
+              const SizedBox(height: 16),
+              LoginOptionsRow(
+                rememberMe: _rememberMe,
+                onRememberMeChanged: (value) =>
+                    setState(() => _rememberMe = value),
+                onForgotPassword: () {
+                  // TODO: Implementar recuperação de senha
+                },
+              ),
+              const SizedBox(height: 24),
+              Selector<LoginController, bool>(
+                selector: (_, controller) => controller.isLoading,
+                builder: (_, isLoading, __) {
+                  return PrimaryButton(
+                    label: AppStrings.login,
+                    onPressed: isLoading ? null : _login,
+                    isLoading: isLoading,
+                  );
+                },
+              ),
+              const SizedBox(height: 16),
+              CreateAccountFooter(
+                onCreateAccount: () =>
+                    Navigator.of(context).pushNamed('/cadastro'),
+              ),
+            ],
           ),
         ),
       ),

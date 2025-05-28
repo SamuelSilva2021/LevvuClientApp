@@ -9,11 +9,16 @@ class ApiResponse<T> {
     this.data,
   });
 
-  factory ApiResponse.fromJson(Map<String, dynamic> json, T? Function(Map<String, dynamic>)? fromJson) {
+  factory ApiResponse.fromJson(
+    Map<String, dynamic> json,
+    T Function(dynamic)? fromJsonT,
+  ) {
     return ApiResponse(
       isSuccess: json['isSuccess'] ?? false,
       message: json['message'] ?? 'Ocorreu um erro desconhecido',
-      data: json['data'] != null && fromJson != null ? fromJson(json['data']) : null,
+      data: json['data'] != null && fromJsonT != null
+          ? fromJsonT(json['data'])
+          : null,
     );
   }
 }

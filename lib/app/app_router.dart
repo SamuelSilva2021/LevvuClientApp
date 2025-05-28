@@ -10,6 +10,7 @@ import 'package:levvu_client/presentation/pages/perfil_usuario_page.dart';
 import 'package:levvu_client/presentation/pages/solicitacao_frete_page.dart';
 import 'package:levvu_client/presentation/pages/visualizacao_propostas_page.dart';
 import 'package:provider/provider.dart';
+import 'package:levvu_client/core/constants/asset_constants.dart';
 
 class AppRouter {
   static Route<dynamic> generateRoute(RouteSettings settings) {
@@ -83,15 +84,15 @@ class _SplashScreenState extends State<SplashScreen> {
   Future<void> _initializeApp() async {
     // Pequeno atraso para mostrar a tela de splash
     await Future.delayed(const Duration(seconds: 2));
-    
+
     if (!mounted) return;
-    
+
     // Inicializar o provider de usuário
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     await userProvider.initialize();
-    
+
     if (!mounted) return;
-    
+
     // Verificar se o usuário está autenticado
     if (userProvider.isAuthenticated) {
       Navigator.of(context).pushReplacementNamed('/home');
@@ -108,20 +109,18 @@ class _SplashScreenState extends State<SplashScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.local_shipping_outlined,
-              size: 100,
-              color: Colors.white,
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'Levvu',
-              style: TextStyle(
-                fontSize: 32,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
+            ClipRRect(
+              borderRadius: BorderRadius.circular(
+                  75), // Metade da largura para fazer um círculo perfeito
+              child: Image.asset(
+                AssetConstants.logo,
+                width: 150,
+                height: 150,
+                fit: BoxFit.contain,
+                colorBlendMode: BlendMode.srcOver,
               ),
             ),
+            const SizedBox(height: 24),           
             const SizedBox(height: 48),
             CircularProgressIndicator(
               valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
@@ -132,5 +131,3 @@ class _SplashScreenState extends State<SplashScreen> {
     );
   }
 }
-
-

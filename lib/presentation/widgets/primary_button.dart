@@ -5,23 +5,26 @@ class PrimaryButton extends StatelessWidget {
   final String label;
   final VoidCallback? onPressed;
   final bool isLoading;
+  final bool isFullWidth;
 
   const PrimaryButton({
     super.key,
     required this.label,
     this.onPressed,
     this.isLoading = false,
+    this.isFullWidth = true,
   });
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 50,
+      width: isFullWidth ? double.infinity : null,
       child: ElevatedButton(
-        onPressed: isLoading ? null : onPressed,
+        onPressed: onPressed,
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
           ),
