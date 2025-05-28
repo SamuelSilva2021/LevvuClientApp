@@ -79,7 +79,19 @@ class FreightCard extends StatelessWidget {
             ),
             const SizedBox(height: 8),
 
-            
+            // Parceiro e valor
+            _buildInfoRow(
+              Icons.person_outline,
+              'Parceiro:',
+              freight['parceiro'],
+            ),
+            const SizedBox(height: 8),
+            _buildInfoRow(
+              Icons.attach_money_outlined,
+              'Valor:',
+              freight['valor'],
+            ),
+
             // Avaliação
             if (freight['status'] == 'Concluído') ...[
               const SizedBox(height: 8),
