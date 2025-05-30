@@ -82,22 +82,31 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _initializeApp() async {
-    // Pequeno atraso para mostrar a tela de splash
-    await Future.delayed(const Duration(seconds: 2));
+    try {
+      // Pequeno atraso para mostrar a tela de splash
+      await Future.delayed(const Duration(seconds: 2));
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    // Inicializar o provider de usuário
-    final userProvider = Provider.of<UserProvider>(context, listen: false);
-    await userProvider.initialize();
+      // Inicializar o provider de usuário
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      await userProvider.initialize();
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    // Verificar se o usuário está autenticado
-    if (userProvider.isAuthenticated) {
-      Navigator.of(context).pushReplacementNamed('/home');
-    } else {
-      Navigator.of(context).pushReplacementNamed('/login');
+      // Verificar se o usuário está autenticado
+      if (userProvider.isAuthenticated) {
+        debugPrint('Usuário autenticado, redirecionando para home');
+        Navigator.of(context).pushReplacementNamed('/home');
+      } else {
+        debugPrint('Usuário não autenticado, redirecionando para login');
+        Navigator.of(context).pushReplacementNamed('/login');
+      }
+    } catch (e) {
+      debugPrint('Erro ao inicializar aplicação: $e');
+      if (mounted) {
+        Navigator.of(context).pushReplacementNamed('/login');
+      }
     }
   }
 
@@ -120,7 +129,7 @@ class _SplashScreenState extends State<SplashScreen> {
                 colorBlendMode: BlendMode.srcOver,
               ),
             ),
-            const SizedBox(height: 24),           
+            const SizedBox(height: 24),
             const SizedBox(height: 48),
             CircularProgressIndicator(
               valueColor: AlwaysStoppedAnimation<Color>(Colors.white),

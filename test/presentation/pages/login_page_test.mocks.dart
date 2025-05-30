@@ -58,12 +58,12 @@ class MockLoginController extends _i1.Mock implements _i2.LoginController {
       ) as _i3.Future<void>);
 
   @override
-  _i3.Future<void> login({
-    required _i4.BuildContext? context,
-    required String? email,
-    required String? password,
-    required Function? navigateToHome,
-    required _i4.GlobalKey<_i4.ScaffoldMessengerState>? scaffoldKey,
+  _i3.Future<bool> login({
+    required _i4.BuildContext context,
+    required String email,
+    required String password,
+    required Function navigateToHome,
+    required _i4.GlobalKey<_i4.ScaffoldMessengerState> scaffoldKey,
   }) =>
       (super.noSuchMethod(
         Invocation.method(
@@ -77,9 +77,9 @@ class MockLoginController extends _i1.Mock implements _i2.LoginController {
             #scaffoldKey: scaffoldKey,
           },
         ),
-        returnValue: _i3.Future<void>.value(),
-        returnValueForMissingStub: _i3.Future<void>.value(),
-      ) as _i3.Future<void>);
+        returnValue: _i3.Future<bool>.value(false),
+        returnValueForMissingStub: _i3.Future<bool>.value(false),
+      ) as _i3.Future<bool>);
 
   @override
   void addListener(_i5.VoidCallback? listener) => super.noSuchMethod(
