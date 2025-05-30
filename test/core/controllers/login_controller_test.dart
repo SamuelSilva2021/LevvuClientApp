@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:levvu_client/core/controllers/login_controller.dart';
 import 'package:levvu_client/core/provider/user_provider.dart';
 import 'package:levvu_client/core/services/api/api_service.dart';
+import 'package:levvu_client/core/network/api_client.dart';
 import 'package:levvu_client/core/services/auth/auth_service.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
@@ -142,8 +143,14 @@ void main() {
   });
 
   group('LoginController - clearError', () {
-    test('deve limpar mensagem de erro', () {
-      loginController.errorMessage = 'Erro de teste';
+    test('deve limpar mensagem de erro', () async {
+      await loginController.login(
+        context: mockContext,
+        email: '',
+        password: '',
+        navigateToHome: () {},
+        scaffoldKey: mockScaffoldKey,
+      );
       loginController.clearError();
       expect(loginController.errorMessage, null);
     });
