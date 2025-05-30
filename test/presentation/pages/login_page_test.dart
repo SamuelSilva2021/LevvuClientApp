@@ -4,7 +4,6 @@ import 'package:levvu_client/core/controllers/login_controller.dart';
 import 'package:levvu_client/core/provider/user_provider.dart';
 import 'package:levvu_client/presentation/pages/login_page.dart';
 import 'package:levvu_client/core/constants/app_strings.dart';
-import 'package:levvu_client/core/utils/validators.dart';
 import 'package:levvu_client/presentation/widgets/primary_button.dart';
 import 'package:levvu_client/presentation/widgets/custom_text_field.dart';
 import 'package:provider/provider.dart';
@@ -21,12 +20,10 @@ void main() {
 
   late MockLoginController mockLoginController;
   late MockUserProvider mockUserProvider;
-  late MockContext mockContext;
 
   setUp(() {
     mockLoginController = MockLoginController();
     mockUserProvider = MockUserProvider();
-    mockContext = MockContext();
     when(mockLoginController.isLoading).thenReturn(false);
     when(mockLoginController.errorMessage).thenReturn(null);
   });

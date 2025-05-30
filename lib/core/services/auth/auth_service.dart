@@ -1,7 +1,5 @@
 import 'dart:convert';
 import 'package:levvu_client/core/models/auth_model.dart';
-import 'package:levvu_client/core/models/login_response_model.dart';
-import 'package:levvu_client/core/services/api/api_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/foundation.dart';
 

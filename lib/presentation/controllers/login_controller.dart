@@ -1,6 +1,4 @@
 import 'package:flutter/foundation.dart';
-import 'package:levvu_client/core/models/auth_model.dart';
-import 'package:levvu_client/core/models/user_login_model.dart';
 import 'package:levvu_client/core/repositories/auth_repository.dart';
 import 'package:levvu_client/core/services/api/api_service.dart';
 

@@ -28,7 +28,7 @@ class FreightCard extends StatelessWidget {
               children: [
                 Text(
                   'Frete #${freight['id']}',
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     color: AppColors.primary,
                   ),
@@ -103,7 +103,7 @@ class FreightCard extends StatelessWidget {
                     color: Colors.amber,
                   ),
                   const SizedBox(width: 8),
-                  Text(
+                  const Text(
                     'Avaliação:',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
@@ -142,7 +142,7 @@ class FreightCard extends StatelessWidget {
                     label: const Text('DETALHES'),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppColors.primary,
-                      side: BorderSide(color: AppColors.primary),
+                      side: const BorderSide(color: AppColors.primary),
                       maximumSize: const Size(120, 40),
                       padding: const EdgeInsets.symmetric(horizontal: 8),
                     ),
@@ -224,7 +224,7 @@ class FreightCard extends StatelessWidget {
         const SizedBox(width: 8),
         Text(
           label,
-          style: TextStyle(
+          style: const TextStyle(
             fontWeight: FontWeight.bold,
             color: AppColors.textPrimary,
           ),
@@ -233,7 +233,7 @@ class FreightCard extends StatelessWidget {
         Expanded(
           child: Text(
             value,
-            style: TextStyle(
+            style: const TextStyle(
               color: AppColors.textPrimary,
             ),
           ),
@@ -247,7 +247,7 @@ class FreightCard extends StatelessWidget {
       padding: const EdgeInsets.only(left: 28, bottom: 4),
       child: Row(
         children: [
-          Icon(
+          const Icon(
             Icons.check_circle_outline,
             size: 16,
             color: AppColors.primary,
@@ -255,7 +255,7 @@ class FreightCard extends StatelessWidget {
           const SizedBox(width: 8),
           Text(
             text,
-            style: TextStyle(
+            style: const TextStyle(
               color: AppColors.textPrimary,
               fontSize: 14,
             ),

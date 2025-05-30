@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:levvu_client/core/constants/app_colors.dart';
 import 'package:levvu_client/core/provider/user_provider.dart';
 import 'package:levvu_client/presentation/widgets/profile/profile_form.dart';
 import 'package:provider/provider.dart';

@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:levvu_client/core/constants/app_colors.dart';
 import 'package:levvu_client/core/constants/app_strings.dart';
 import 'package:levvu_client/core/utils/validators.dart';
 import 'package:levvu_client/presentation/widgets/custom_text_field.dart';
