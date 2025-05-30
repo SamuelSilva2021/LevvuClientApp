@@ -24,7 +24,6 @@ class _PerfilUsuarioPageState extends State<PerfilUsuarioPage> {
   @override
   void initState() {
     super.initState();
-    // Inicializar controllers vazios, serão preenchidos no didChangeDependencies
     _nomeController = TextEditingController();
     _emailController = TextEditingController();
     _telefoneController = TextEditingController();
@@ -33,20 +32,18 @@ class _PerfilUsuarioPageState extends State<PerfilUsuarioPage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Carregar dados do usuário do provider
+
     final userProvider = Provider.of<UserProvider>(context);
 
-    // Atualizar controllers com dados do usuário
     _nomeController.text = userProvider.userName;
     _emailController.text = userProvider.userEmail;
     _telefoneController.text = userProvider.userPhone;
 
-    // Carregar preferências de notificação
     if (userProvider.authData != null) {
       _receberNotificacoesEmail =
-          userProvider.authData!.userData['emailNotifications'] ?? true;
+          userProvider.authData!.user.emailNotifications ?? true;
       _receberNotificacoesWhatsapp =
-          userProvider.authData!.userData['whatsappNotifications'] ?? true;
+          userProvider.authData!.user.whatsappNotifications ?? true;
     }
   }
 
@@ -76,11 +73,9 @@ class _PerfilUsuarioPageState extends State<PerfilUsuarioPage> {
                   _nomeController.text = userProvider.userName;
                   _telefoneController.text = userProvider.userPhone;
                   _receberNotificacoesEmail =
-                      userProvider.authData?.userData['emailNotifications'] ??
-                          true;
-                  _receberNotificacoesWhatsapp = userProvider
-                          .authData?.userData['whatsappNotifications'] ??
-                      true;
+                      userProvider.authData?.user.emailNotifications ?? true;
+                  _receberNotificacoesWhatsapp =
+                      userProvider.authData?.user.whatsappNotifications ?? true;
                 }
               });
             },

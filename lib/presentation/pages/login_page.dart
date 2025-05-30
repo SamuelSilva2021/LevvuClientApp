@@ -36,6 +36,13 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return ScaffoldMessenger(
       key: _scaffoldKey,
@@ -62,13 +69,27 @@ class _LoginPageState extends State<LoginPage> {
                 },
               ),
               const SizedBox(height: 24),
-              Selector<LoginController, bool>(
-                selector: (_, controller) => controller.isLoading,
-                builder: (_, isLoading, __) {
-                  return PrimaryButton(
-                    label: AppStrings.login,
-                    onPressed: isLoading ? null : _login,
-                    isLoading: isLoading,
+              Consumer<LoginController>(
+                builder: (context, controller, _) {
+                  return Column(
+                    children: [
+                      if (controller.errorMessage != null) ...[
+                        Text(
+                          controller.errorMessage!,
+                          style: const TextStyle(
+                            color: Colors.red,
+                            fontSize: 14,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 16),
+                      ],
+                      PrimaryButton(
+                        label: AppStrings.login,
+                        onPressed: controller.isLoading ? null : _login,
+                        isLoading: controller.isLoading,
+                      ),
+                    ],
                   );
                 },
               ),
@@ -84,19 +105,23 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  void _login() {
+  void _navigateToHome() {
+    Navigator.of(context).pushReplacementNamed('/home');
+  }
+
+  Future<void> _login() async {
     if (!_formKey.currentState!.validate()) return;
 
-    _loginController.login(
+    final success = await _loginController.login(
       email: _emailController.text,
       password: _passwordController.text,
       navigateToHome: _navigateToHome,
       scaffoldKey: _scaffoldKey,
       context: context,
     );
-  }
 
-  void _navigateToHome() {
-    Navigator.of(context).pushReplacementNamed('/home');
+    if (success && _rememberMe) {
+      // TODO: Implementar persistência de credenciais
+    }
   }
 }

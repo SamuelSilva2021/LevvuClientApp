@@ -153,7 +153,7 @@ class HomeContent extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8),
-            Text(
+            const Text(
               'O que você precisa transportar hoje?',
               style: TextStyle(
                 fontSize: 16,

@@ -76,14 +76,56 @@ class _HistoricoFretesPageState extends State<HistoricoFretesPage>
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _errorMessage != null
-              ? Center(child: Text(_errorMessage!))
+              ? Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.error_outline,
+                          size: 48,
+                          color: AppColors.error,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          _errorMessage!,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: AppColors.textPrimary,
+                            fontSize: 16,
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        ElevatedButton.icon(
+                          onPressed: _loadFreights,
+                          icon: const Icon(Icons.refresh),
+                          label: const Text('Tentar novamente'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 12,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
               : RefreshIndicator(
                   onRefresh: _loadFreights,
                   child: TabBarView(
                     controller: _tabController,
                     children: [
                       // Aba Todos
-                      _buildFretesList(uiFretes),
+                      uiFretes.isEmpty
+                          ? const EmptyFreights(
+                            title: 'Nenhum frete registrado',
+                              subtitle:
+                                  'Todos os seus fretes aparecerão aqui',
+                            ):_buildFretesList(uiFretes),
 
                       // Aba Em andamento
                       fretesPendentes.isEmpty
@@ -151,13 +193,15 @@ class _HistoricoFretesPageState extends State<HistoricoFretesPage>
       } else {
         setState(() {
           _isLoading = false;
-          _errorMessage = response.message;
+          _errorMessage = response.message == 'Token de acesso não disponível'
+              ? 'Sua sessão expirou. Por favor, faça login novamente.'
+              : response.message;
         });
       }
     } catch (e) {
       setState(() {
         _isLoading = false;
-        _errorMessage = 'Erro de conexão: ${e.toString()}';
+        _errorMessage = 'Erro ao carregar fretes. Por favor, tente novamente.';
       });
     }
   }

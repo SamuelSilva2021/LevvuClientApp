@@ -1,52 +1,90 @@
+enum UserType { client, partner, admin }
+
+enum UserStatus { active, inactive, blocked }
+
 class UserModel {
   final String id;
-  final String fullName;
   final String email;
-  final String phoneNumber;
+  final String fullName;
   final String cpf;
-  final bool isClient;
-  final bool isPartner;
+  final String phoneNumber;
+  final UserType userType;
+  final bool acceptedTerm;
   final bool whatsappNotifications;
   final bool emailNotifications;
+  final UserStatus status;
+  final String profileId;
 
   UserModel({
     required this.id,
-    required this.fullName,
     required this.email,
-    required this.phoneNumber,
+    required this.fullName,
     required this.cpf,
-    this.isClient = true,
-    this.isPartner = false,
-    this.whatsappNotifications = true,
-    this.emailNotifications = true,
+    required this.phoneNumber,
+    required this.userType,
+    required this.acceptedTerm,
+    required this.whatsappNotifications,
+    required this.emailNotifications,
+    required this.status,
+    required this.profileId,
   });
-
-  factory UserModel.fromJson(Map<String, dynamic> json) {
-    return UserModel(
-      id: json['id'] ?? '',
-      fullName: json['fullName'] ?? '',
-      email: json['email'] ?? '',
-      phoneNumber: json['phoneNumber'] ?? '',
-      cpf: json['cpf'] ?? '',
-      isClient: json['isClient'] ?? true,
-      isPartner: json['isPartner'] ?? false,
-      whatsappNotifications: json['whatsappNotifications'] ?? true,
-      emailNotifications: json['emailNotifications'] ?? true,
-    );
-  }
 
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'fullName': fullName,
       'email': email,
-      'phoneNumber': phoneNumber,
+      'fullName': fullName,
       'cpf': cpf,
-      'isClient': isClient,
-      'isPartner': isPartner,
+      'phoneNumber': phoneNumber,
+      'userType': userType.toString().split('.').last,
+      'acceptedTerm': acceptedTerm,
       'whatsappNotifications': whatsappNotifications,
       'emailNotifications': emailNotifications,
+      'status': status.toString().split('.').last,
+      'profileId': profileId,
     };
+  }
+
+  factory UserModel.fromJson(Map<String, dynamic> json) {
+    return UserModel(
+      id: json['id']?.toString() ?? '',
+      email: json['email']?.toString() ?? '',
+      fullName: json['fullName']?.toString() ?? '',
+      cpf: json['cpf']?.toString() ?? '',
+      phoneNumber: json['phoneNumber']?.toString() ?? '',
+      userType: _parseUserType(json['userType']),
+      acceptedTerm: json['acceptedTerm'] ?? false,
+      whatsappNotifications: json['whatsappNotifications'] ?? false,
+      emailNotifications: json['emailNotifications'] ?? false,
+      status: _parseUserStatus(json['status']),
+      profileId: json['profileId']?.toString() ?? '',
+    );
+  }
+
+  static UserType _parseUserType(dynamic value) {
+    if (value == null) return UserType.client;
+    final type = value.toString().toLowerCase();
+    switch (type) {
+      case 'partner':
+        return UserType.partner;
+      case 'admin':
+        return UserType.admin;
+      default:
+        return UserType.client;
+    }
+  }
+
+  static UserStatus _parseUserStatus(dynamic value) {
+    if (value == null) return UserStatus.active;
+    final status = value.toString().toLowerCase();
+    switch (status) {
+      case 'inactive':
+        return UserStatus.inactive;
+      case 'blocked':
+        return UserStatus.blocked;
+      default:
+        return UserStatus.active;
+    }
   }
 
   // Criar uma cópia com campos atualizados
@@ -62,10 +100,13 @@ class UserModel {
       email: email,
       phoneNumber: phoneNumber ?? this.phoneNumber,
       cpf: cpf,
-      isClient: isClient,
-      isPartner: isPartner,
-      whatsappNotifications: whatsappNotifications ?? this.whatsappNotifications,
+      userType: userType,
+      acceptedTerm: acceptedTerm,
+      whatsappNotifications:
+          whatsappNotifications ?? this.whatsappNotifications,
       emailNotifications: emailNotifications ?? this.emailNotifications,
+      status: status,
+      profileId: profileId,
     );
   }
 }

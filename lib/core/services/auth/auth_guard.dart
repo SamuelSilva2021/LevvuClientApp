@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:levvu_client/core/provider/user_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:levvu_client/core/models/user_model.dart';
 
 /// Wrapper para verificar autenticação e redirecionar conforme necessário
 class AuthGuard extends StatelessWidget {
@@ -63,16 +64,16 @@ class AuthGuard extends StatelessWidget {
 extension PermissionChecks on UserProvider {
   // Verificar se é cliente
   bool get isClientUser => isClient;
-  
+
   // Verificar se é parceiro
   bool get isPartnerUser => isPartner;
-  
+
   // Verificar se tem permissão para acessar área administrativa
-  bool get isAdmin => authData?.userData['isAdmin'] == true;
-  
+  bool get isAdmin => authData?.user.userType == UserType.admin;
+
   // Verificar permissões específicas
   bool hasPermission(String permission) {
-    final permissions = authData?.userData['permissions'] as List?;
-    return permissions?.contains(permission) ?? false;
+    // TODO: Implementar verificação de permissões quando necessário
+    return false;
   }
 }

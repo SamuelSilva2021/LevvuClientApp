@@ -14,14 +14,19 @@ import 'package:mockito/annotations.dart';
 @GenerateMocks([LoginController, UserProvider])
 import 'login_page_test.mocks.dart';
 
+class MockContext extends Mock implements BuildContext {}
+
 void main() {
   late MockLoginController mockLoginController;
   late MockUserProvider mockUserProvider;
+  late MockContext mockContext;
 
   setUp(() {
     mockLoginController = MockLoginController();
     mockUserProvider = MockUserProvider();
+    mockContext = MockContext();
     when(mockLoginController.isLoading).thenReturn(false);
+    when(mockLoginController.errorMessage).thenReturn(null);
   });
 
   Widget createLoginPage() {
@@ -31,8 +36,10 @@ void main() {
             value: mockLoginController),
         ChangeNotifierProvider<UserProvider>.value(value: mockUserProvider),
       ],
-      child: const MaterialApp(
-        home: LoginPage(),
+      child: MaterialApp(
+        home: Builder(
+          builder: (context) => LoginPage(),
+        ),
       ),
     );
   }
@@ -60,6 +67,18 @@ void main() {
 
       expect(find.byType(Image), findsOneWidget); // Logo
       expect(find.text(AppStrings.appSubtitle), findsOneWidget); // Subtítulo
+    });
+
+    testWidgets('deve mostrar mensagem de erro quando houver erro',
+        (WidgetTester tester) async {
+      const errorMessage = 'Erro de login';
+      when(mockLoginController.errorMessage).thenReturn(errorMessage);
+
+      await tester.pumpWidget(createLoginPage());
+      await tester.pumpAndSettle();
+
+      expect(find.text(errorMessage), findsOneWidget);
+      expect(find.text(errorMessage, skipOffstage: false), findsOneWidget);
     });
   });
 
@@ -96,12 +115,34 @@ void main() {
       expect(find.text('A senha deve ter pelo menos 8 caracteres'),
           findsOneWidget);
     });
+
+    testWidgets('deve validar email inválido', (WidgetTester tester) async {
+      await tester.pumpWidget(createLoginPage());
+      await tester.pumpAndSettle();
+
+      // Preencher email inválido
+      await tester.enterText(
+          find.byType(CustomTextField).first, 'email_invalido');
+      await tester.pumpAndSettle();
+
+      // Tentar submeter
+      await tester.tap(find.byType(PrimaryButton));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Digite um email válido'), findsOneWidget);
+    });
   });
 
   group('LoginPage - Integração com Controller', () {
     testWidgets('deve chamar login com credenciais válidas',
         (WidgetTester tester) async {
-      when(mockLoginController.isLoading).thenReturn(false);
+      when(mockLoginController.login(
+        email: 'teste@teste.com',
+        password: 'Teste@123',
+        navigateToHome: () {},
+        scaffoldKey: GlobalKey<ScaffoldMessengerState>(),
+        context: mockContext,
+      )).thenAnswer((_) async => true);
 
       await tester.pumpWidget(createLoginPage());
       await tester.pumpAndSettle();
@@ -116,13 +157,13 @@ void main() {
       await tester.tap(find.byType(PrimaryButton));
       await tester.pumpAndSettle();
 
-      // Verificar se o controller foi chamado
+      // Verificar se o controller foi chamado com os parâmetros corretos
       verify(mockLoginController.login(
         email: 'teste@teste.com',
         password: 'Teste@123',
-        navigateToHome: anyNamed('navigateToHome'),
-        scaffoldKey: anyNamed('scaffoldKey'),
-        context: anyNamed('context'),
+        navigateToHome: captureAny,
+        scaffoldKey: captureAny,
+        context: captureAny,
       )).called(1);
     });
 
@@ -137,6 +178,82 @@ void main() {
       final button = tester.widget<PrimaryButton>(find.byType(PrimaryButton));
       expect(button.onPressed, isNull);
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    });
+
+    testWidgets('deve limpar mensagem de erro ao tentar login novamente',
+        (WidgetTester tester) async {
+      const errorMessage = 'Erro de login';
+      when(mockLoginController.errorMessage).thenReturn(errorMessage);
+      when(mockLoginController.clearError()).thenAnswer((_) {});
+
+      await tester.pumpWidget(createLoginPage());
+      await tester.pumpAndSettle();
+
+      // Preencher formulário
+      await tester.enterText(
+          find.byType(CustomTextField).first, 'teste@teste.com');
+      await tester.enterText(find.byType(CustomTextField).last, 'Teste@123');
+      await tester.pumpAndSettle();
+
+      // Tentar login novamente
+      await tester.tap(find.byType(PrimaryButton));
+      await tester.pumpAndSettle();
+
+      verify(mockLoginController.clearError()).called(1);
+    });
+
+    testWidgets('deve verificar sessão existente ao iniciar',
+        (WidgetTester tester) async {
+      when(mockLoginController.checkExistingSession(anyNamed('navigateToHome')))
+          .thenAnswer((_) async {});
+
+      await tester.pumpWidget(createLoginPage());
+      await tester.pumpAndSettle();
+
+      verify(mockLoginController
+              .checkExistingSession(anyNamed('navigateToHome')))
+          .called(1);
+    });
+  });
+
+  group('LoginPage - Navegação', () {
+    testWidgets('deve navegar para cadastro ao clicar no link',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(createLoginPage());
+      await tester.pumpAndSettle();
+
+      // Encontrar e clicar no link de cadastro
+      final cadastroFinder = find.text('Criar conta');
+      expect(cadastroFinder, findsOneWidget);
+      await tester.tap(cadastroFinder);
+      await tester.pumpAndSettle();
+
+      // Verificar se a navegação foi chamada
+      expect(find.byType(LoginPage), findsNothing);
+    });
+
+    testWidgets('deve navegar para home após login bem-sucedido',
+        (WidgetTester tester) async {
+      when(mockLoginController.login(
+        email: any<String>(),
+        password: any<String>(),
+        navigateToHome: any<Function>(),
+        scaffoldKey: any<GlobalKey<ScaffoldMessengerState>>(),
+        context: any<BuildContext>(),
+      )).thenAnswer((_) async => true);
+
+      await tester.pumpWidget(createLoginPage());
+      await tester.pumpAndSettle();
+
+      // Preencher e submeter formulário
+      await tester.enterText(
+          find.byType(CustomTextField).first, 'teste@teste.com');
+      await tester.enterText(find.byType(CustomTextField).last, 'Teste@123');
+      await tester.tap(find.byType(PrimaryButton));
+      await tester.pumpAndSettle();
+
+      // Verificar se a navegação foi chamada
+      expect(find.byType(LoginPage), findsNothing);
     });
   });
 }

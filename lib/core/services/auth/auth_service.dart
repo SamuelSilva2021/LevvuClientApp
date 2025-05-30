@@ -1,88 +1,73 @@
 import 'dart:convert';
 import 'package:levvu_client/core/models/auth_model.dart';
+import 'package:levvu_client/core/models/login_response_model.dart';
+import 'package:levvu_client/core/services/api/api_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/foundation.dart';
 
 class AuthService {
-  static const String _authKey = 'auth_data';
-  static final AuthService _instance = AuthService._internal();
-  factory AuthService() => _instance;
-  AuthService._internal();
+  static const String _authDataKey = 'auth_data';
+  final SharedPreferences _prefs;
 
-  // Armazenar dados de autenticação
-  static Future<void> saveAuthData(AuthModel authModel) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_authKey, jsonEncode(authModel.toJson()));
+  AuthService(this._prefs);
+
+  Future<void> saveAuthData(AuthModel authData) async {
+    debugPrint('💾 Salvando dados de autenticação...');
+    final json = authData.toJson();
+    debugPrint('📦 Dados a serem salvos: $json');
+    await _prefs.setString(_authDataKey, jsonEncode(json));
+    debugPrint('✅ Dados salvos com sucesso');
+
+    // Verifica se os dados foram salvos corretamente
+    final savedData = await getAuthData();
+    debugPrint('🔍 Dados salvos verificados: ${savedData?.toJson()}');
   }
 
-  // Recuperar dados de autenticação
-  static Future<AuthModel?> getAuthData() async {
-    final prefs = await SharedPreferences.getInstance();
-    final jsonString = prefs.getString(_authKey);
-    return jsonString != null
-        ? AuthModel.fromJson(jsonDecode(jsonString))
-        : null;
+  Future<AuthModel?> getAuthData() async {
+    debugPrint('📖 Buscando dados de autenticação...');
+    final json = _prefs.getString(_authDataKey);
+    if (json == null) {
+      debugPrint('❌ Nenhum dado de autenticação encontrado');
+      return null;
+    }
+
+    debugPrint('📖 Dados de autenticação encontrados: $json');
+    try {
+      final data = jsonDecode(json);
+      debugPrint('📦 Parsing AuthModel from JSON: $data');
+      final authData = AuthModel.fromJson(data);
+      debugPrint('✅ Dados de autenticação parseados: ${authData.toJson()}');
+      return authData;
+    } catch (e) {
+      debugPrint('❌ Erro ao parsear dados de autenticação: $e');
+      return null;
+    }
   }
 
-  static Future<String?> getAccessToken() async {
+  Future<String?> getAccessToken() async {
     final authData = await getAuthData();
+    debugPrint(
+        '🔑 Obtendo access token: ${authData?.accessToken != null ? 'Token encontrado' : 'Token não encontrado'}');
     return authData?.accessToken;
   }
 
-  // Verificar se o usuário está autenticado
-  static Future<bool> isAuthenticated() async {
-    final authModel = await getAuthData();
-    if (authModel == null) {
-      return false;
-    }
-
-    // Se o token estiver expirado, tentar renovar
-    if (authModel.isTokenExpired) {
-      final refreshed = await refreshToken();
-      return refreshed;
-    }
-
-    return true;
+  Future<String?> getRefreshToken() async {
+    final authData = await getAuthData();
+    debugPrint(
+        '🔄 Obtendo refresh token: ${authData?.refreshToken != null ? 'Token encontrado' : 'Token não encontrado'}');
+    return authData?.refreshToken;
   }
 
-  // Renovar token usando refresh token
-  static Future<bool> refreshToken() async {
-    final authModel = await getAuthData();
-    if (authModel == null || authModel.refreshToken.isEmpty) {
-      return false;
-    }
-
-    try {
-      // Implementar chamada para renovar token
-      // Exemplo:
-      // final response = await http.post(
-      //   Uri.parse('$baseUrl/api/auth/refresh-token'),
-      //   headers: {'Content-Type': 'application/json'},
-      //   body: jsonEncode({'refreshToken': authModel.refreshToken}),
-      // );
-
-      // if (response.statusCode == 200) {
-      //   final data = jsonDecode(response.body);
-      //   final newAuthModel = AuthModel(
-      //     accessToken: data['token'],
-      //     refreshToken: data['refreshToken'],
-      //     tokenExpiration: DateTime.parse(data['tokenExpiration']),
-      //     userData: authModel.userData,
-      //   );
-      //
-      //   await saveAuthData(newAuthModel);
-      //   return true;
-      // }
-
-      // Por enquanto, retornar false até implementarmos o endpoint de refresh
-      return false;
-    } catch (e) {
-      return false;
-    }
+  Future<bool> isAuthenticated() async {
+    final authData = await getAuthData();
+    final isAuth = authData != null && authData.accessToken != null;
+    debugPrint('🔒 Verificando autenticação: $isAuth');
+    return isAuth;
   }
 
-  // Fazer logout
-  static Future<void> logout() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_authKey);
+  Future<void> clearAuthData() async {
+    debugPrint('🧹 Limpando dados de autenticação...');
+    await _prefs.remove(_authDataKey);
+    debugPrint('✅ Dados de autenticação removidos');
   }
 }
