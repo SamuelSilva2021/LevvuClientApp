@@ -1,20 +1,23 @@
 import 'package:levvu_client/core/models/user_model.dart';
 
 class RefreshTokenResponseModel {
-  final String accessToken;
+  final String token;
   final String refreshToken;
+  final DateTime tokenExpiration;
   final UserModel user;
 
   RefreshTokenResponseModel({
-    required this.accessToken,
+    required this.token,
     required this.refreshToken,
+    required this.tokenExpiration,
     required this.user,
   });
 
   Map<String, dynamic> toJson() {
     return {
-      'accessToken': accessToken,
+      'token': token,
       'refreshToken': refreshToken,
+      'tokenExpiration': tokenExpiration.toIso8601String(),
       'user': user.toJson(),
     };
   }
@@ -24,8 +27,11 @@ class RefreshTokenResponseModel {
     final user = data['user'] as Map<String, dynamic>? ?? {};
 
     return RefreshTokenResponseModel(
-      accessToken: data['token']?.toString() ?? '',
+      token: data['token']?.toString() ?? '',
       refreshToken: data['refreshToken']?.toString() ?? '',
+      tokenExpiration: data['tokenExpiration'] != null
+          ? DateTime.parse(data['tokenExpiration'].toString())
+          : DateTime.now().add(const Duration(hours: 1)),
       user: UserModel.fromJson(user),
     );
   }

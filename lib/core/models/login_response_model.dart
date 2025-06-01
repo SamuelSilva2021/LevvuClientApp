@@ -1,10 +1,10 @@
-import 'package:levvu_client/core/models/user_response_model.dart';
+import 'package:levvu_client/core/models/user_login_response_model.dart';
 
 class LoginResponseModel {
   final String token;
   final String refreshToken;
   final DateTime tokenExpiration;
-  final UserResponseModel user;
+  final UserLoginResponseModel user;
 
   LoginResponseModel({
     required this.token,
@@ -18,7 +18,7 @@ class LoginResponseModel {
       token: json['token'] as String,
       refreshToken: json['refreshToken'] as String,
       tokenExpiration: DateTime.parse(json['tokenExpiration'] as String),
-      user: UserResponseModel.fromJson(json['user'] as Map<String, dynamic>),
+      user: UserLoginResponseModel.fromJson(json['user'] as Map<String, dynamic>),
     );
   }
 

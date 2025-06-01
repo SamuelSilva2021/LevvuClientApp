@@ -1,11 +1,11 @@
 import 'package:levvu_client/core/models/user_enum.dart';
 
-class UserResponseModel {
+class UserLoginResponseModel {
   final String id;
   final String email;
   final String fullName;
   final String? cpf;
-  final String? phoneNumber;
+  final String phoneNumber;
   final EUserType userType;
   final bool acceptedTerm;
   final bool whatsappNotifications;
@@ -13,12 +13,12 @@ class UserResponseModel {
   final EUserStatusTypes status;
   final String profileId;
 
-  UserResponseModel({
+  UserLoginResponseModel({
     required this.id,
     required this.email,
     required this.fullName,
     this.cpf,
-    this.phoneNumber,
+    required this.phoneNumber,
     required this.userType,
     required this.acceptedTerm,
     required this.whatsappNotifications,
@@ -27,13 +27,13 @@ class UserResponseModel {
     required this.profileId,
   });
 
-  factory UserResponseModel.fromJson(Map<String, dynamic> json) {
-    return UserResponseModel(
+  factory UserLoginResponseModel.fromJson(Map<String, dynamic> json) {
+    return UserLoginResponseModel(
       id: json['id'] as String,
       email: json['email'] as String,
       fullName: json['fullName'] as String,
       cpf: json['cpf'] as String?,
-      phoneNumber: json['phoneNumber'] as String?,
+      phoneNumber: json['phoneNumber'] as String,
       userType: EUserType.values[json['userType'] as int],
       acceptedTerm: json['acceptedTerm'] as bool,
       whatsappNotifications: json['whatsappNotifications'] as bool,

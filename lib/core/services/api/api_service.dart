@@ -6,11 +6,10 @@ import 'package:levvu_client/core/network/api_client.dart';
 import 'package:levvu_client/core/network/interceptors/auth_interceptor.dart';
 import 'package:levvu_client/core/repositories/auth_repository.dart';
 import 'package:levvu_client/core/services/auth/auth_service.dart';
+import 'package:levvu_client/config/env_config.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
-  static const String _baseUrl = 'http://10.0.2.2:5006';
-  static const String _baseUrlAuth = 'http://10.0.2.2:5003';
   static final ApiService _instance = ApiService._internal();
 
   factory ApiService() => _instance;
@@ -20,8 +19,8 @@ class ApiService {
 
   ApiService._internal()
       : _apiClient = ApiClient(
-          baseUrl: _baseUrl,
-          baseUrlAuth: _baseUrlAuth,
+          baseUrl: EnvConfig.mainApiUrl,
+          baseUrlAuth: EnvConfig.authApiUrl,
         ) {
     _initializeAuthRepository();
   }

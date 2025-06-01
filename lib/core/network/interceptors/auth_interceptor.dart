@@ -26,7 +26,7 @@ class AuthInterceptor implements Interceptor {
       return null;
     }
 
-    final token = await _authRepository.getAccessToken();
+    final token = await _authRepository.getToken();
     debugPrint(
         '🔑 Token para requisição $path: ${token != null ? 'Encontrado' : 'Não encontrado'}');
 

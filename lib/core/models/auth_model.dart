@@ -1,55 +1,60 @@
-import 'package:levvu_client/core/models/user_model.dart';
-import 'package:flutter/foundation.dart';
+import 'dart:convert';
+import 'package:levvu_client/core/models/user_login_response_model.dart';
+import 'package:levvu_client/core/models/user_enum.dart';
 
 class AuthModel {
-  final String accessToken;
+  final String token;
   final String refreshToken;
   final DateTime tokenExpiration;
-  final UserModel user;
+  final UserLoginResponseModel user;
 
   AuthModel({
-    required this.accessToken,
+    required this.token,
     required this.refreshToken,
+    required this.tokenExpiration,
     required this.user,
-    DateTime? tokenExpiration,
-  }) : tokenExpiration =
-            tokenExpiration ?? DateTime.now().add(const Duration(hours: 1));
+  });
 
   bool get isTokenExpired => DateTime.now().isAfter(tokenExpiration);
 
+  factory AuthModel.fromJson(Map<String, dynamic> json) {
+    final token = json['token'] as String;
+    final tokenParts = token.split('.');
+    final payload = jsonDecode(utf8.decode(base64Url.decode(tokenParts[1])));
+
+    final user = UserLoginResponseModel(
+      id: payload[
+              'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier']
+          as String,
+      email: payload[
+              'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress']
+          as String,
+      fullName:
+          payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name']
+              as String,
+      phoneNumber: '', // Não disponível no token
+      userType: EUserType.client, // Valor padrão
+      acceptedTerm: true, // Valor padrão
+      whatsappNotifications: true, // Valor padrão
+      emailNotifications: true, // Valor padrão
+      status: EUserStatusTypes.active, // Valor padrão
+      profileId: '', // Não disponível no token
+    );
+
+    return AuthModel(
+      token: token,
+      refreshToken: json['refreshToken'] as String,
+      tokenExpiration: DateTime.parse(json['tokenExpiration'] as String),
+      user: user,
+    );
+  }
+
   Map<String, dynamic> toJson() {
     return {
-      'accessToken': accessToken,
+      'token': token,
       'refreshToken': refreshToken,
       'tokenExpiration': tokenExpiration.toIso8601String(),
       'user': user.toJson(),
     };
-  }
-
-  factory AuthModel.fromJson(Map<String, dynamic> json) {
-    debugPrint('📦 Parsing AuthModel from JSON: $json');
-
-    // Se o JSON já estiver no formato correto (salvo no SharedPreferences)
-    if (json.containsKey('accessToken')) {
-      return AuthModel(
-        accessToken: json['accessToken'] as String,
-        refreshToken: json['refreshToken'] as String,
-        user: UserModel.fromJson(json['user'] as Map<String, dynamic>),
-        tokenExpiration: DateTime.parse(json['tokenExpiration'] as String),
-      );
-    }
-
-    // Se o JSON vier da API (com data e user aninhados)
-    final data = json['data'] as Map<String, dynamic>? ?? {};
-    final user = data['user'] as Map<String, dynamic>? ?? {};
-
-    return AuthModel(
-      accessToken: data['token']?.toString() ?? '',
-      refreshToken: data['refreshToken']?.toString() ?? '',
-      user: UserModel.fromJson(user),
-      tokenExpiration: data['tokenExpiration'] != null
-          ? DateTime.parse(data['tokenExpiration'].toString())
-          : null,
-    );
   }
 }

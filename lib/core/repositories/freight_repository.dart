@@ -1,58 +1,26 @@
 import 'package:levvu_client/core/models/freight_request_model.dart';
 import 'package:levvu_client/core/models/freight_request_response_model.dart';
-import 'package:levvu_client/core/network/api_client.dart';
 import 'package:levvu_client/core/repositories/auth_repository.dart';
-import 'package:levvu_client/core/constants/api_routes.dart';
+import 'package:levvu_client/core/services/api/api_service.dart';
 
 class FreightRepository {
-  final ApiClient _apiClient;
+  final ApiService _apiService;
   final AuthRepository _authRepository;
 
   FreightRepository({
-    required ApiClient apiClient,
+    required ApiService apiService,
     required AuthRepository authRepository,
-  })  : _apiClient = apiClient,
+  })  : _apiService = apiService,
         _authRepository = authRepository;
 
-  Future<ApiResponse<FreightRequestResponse>> createFreightRequest(
-      FreightRequestModel request) async {
-    final token = await _authRepository.getAccessToken();
-    if (token == null) {
-      return ApiResponse(
-        isSuccess: false,
-        message: 'Usuário não autenticado',
-      );
-    }
-
-    final response = await _apiClient.request<FreightRequestResponse>(
-      method: 'POST',
-      path: ApiRoutes.freightRequest,
-      body: request.toJson(),
-      requiresAuth: true,
-      fromJsonT: (json) => FreightRequestResponse.fromJson(json['data']),
-    );
-
-    return response;
+  Future<List<FreightRequestResponse>> getClientFreights() async {
+    final response = await _apiService.getClientFreights();
+    return response.data ?? [];
   }
 
-  Future<ApiResponse<List<FreightRequestResponse>>> getClientFreights() async {
-    final token = await _authRepository.getAccessToken();
-    if (token == null) {
-      return ApiResponse(
-        isSuccess: false,
-        message: 'Usuário não autenticado',
-      );
-    }
-
-    final response = await _apiClient.request<List<FreightRequestResponse>>(
-      method: 'GET',
-      path: ApiRoutes.myRequests,
-      requiresAuth: true,
-      fromJsonT: (json) => (json['data'] as List)
-          .map((item) => FreightRequestResponse.fromJson(item))
-          .toList(),
-    );
-
-    return response;
+  Future<FreightRequestResponse> createFreightRequest(
+      FreightRequestModel request) async {
+    final response = await _apiService.createFreightRequest(request);
+    return response.data!;
   }
 }

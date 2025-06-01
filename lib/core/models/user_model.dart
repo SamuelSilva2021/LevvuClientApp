@@ -1,12 +1,42 @@
-enum UserType { client, partner, admin }
+enum UserType {
+  client(0),
+  partner(1),
+  backoffice(2),
+  user(3);
 
-enum UserStatus { active, inactive, blocked }
+  final int value;
+  const UserType(this.value);
+
+  factory UserType.fromValue(int value) {
+    return UserType.values.firstWhere(
+      (type) => type.value == value,
+      orElse: () => UserType.client,
+    );
+  }
+}
+
+enum UserStatus {
+  pending(0),
+  active(1),
+  blocked(2),
+  deleted(3);
+
+  final int value;
+  const UserStatus(this.value);
+
+  factory UserStatus.fromValue(int value) {
+    return UserStatus.values.firstWhere(
+      (status) => status.value == value,
+      orElse: () => UserStatus.pending,
+    );
+  }
+}
 
 class UserModel {
   final String id;
   final String email;
   final String fullName;
-  final String cpf;
+  final String? cpf;
   final String phoneNumber;
   final UserType userType;
   final bool acceptedTerm;
@@ -19,7 +49,7 @@ class UserModel {
     required this.id,
     required this.email,
     required this.fullName,
-    required this.cpf,
+    this.cpf,
     required this.phoneNumber,
     required this.userType,
     required this.acceptedTerm,
@@ -36,55 +66,29 @@ class UserModel {
       'fullName': fullName,
       'cpf': cpf,
       'phoneNumber': phoneNumber,
-      'userType': userType.toString().split('.').last,
+      'userType': userType.value,
       'acceptedTerm': acceptedTerm,
       'whatsappNotifications': whatsappNotifications,
       'emailNotifications': emailNotifications,
-      'status': status.toString().split('.').last,
+      'status': status.value,
       'profileId': profileId,
     };
   }
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
-      id: json['id']?.toString() ?? '',
-      email: json['email']?.toString() ?? '',
-      fullName: json['fullName']?.toString() ?? '',
-      cpf: json['cpf']?.toString() ?? '',
-      phoneNumber: json['phoneNumber']?.toString() ?? '',
-      userType: _parseUserType(json['userType']),
-      acceptedTerm: json['acceptedTerm'] ?? false,
-      whatsappNotifications: json['whatsappNotifications'] ?? false,
-      emailNotifications: json['emailNotifications'] ?? false,
-      status: _parseUserStatus(json['status']),
-      profileId: json['profileId']?.toString() ?? '',
+      id: json['id'] as String,
+      email: json['email'] as String,
+      fullName: json['fullName'] as String,
+      cpf: json['cpf'] as String?,
+      phoneNumber: json['phoneNumber'] as String,
+      userType: UserType.values[json['userType'] as int],
+      acceptedTerm: json['acceptedTerm'] as bool,
+      whatsappNotifications: json['whatsappNotifications'] as bool,
+      emailNotifications: json['emailNotifications'] as bool,
+      status: UserStatus.values[json['status'] as int],
+      profileId: json['profileId'] as String,
     );
-  }
-
-  static UserType _parseUserType(dynamic value) {
-    if (value == null) return UserType.client;
-    final type = value.toString().toLowerCase();
-    switch (type) {
-      case 'partner':
-        return UserType.partner;
-      case 'admin':
-        return UserType.admin;
-      default:
-        return UserType.client;
-    }
-  }
-
-  static UserStatus _parseUserStatus(dynamic value) {
-    if (value == null) return UserStatus.active;
-    final status = value.toString().toLowerCase();
-    switch (status) {
-      case 'inactive':
-        return UserStatus.inactive;
-      case 'blocked':
-        return UserStatus.blocked;
-      default:
-        return UserStatus.active;
-    }
   }
 
   // Criar uma cópia com campos atualizados
@@ -99,7 +103,6 @@ class UserModel {
       fullName: fullName ?? this.fullName,
       email: email,
       phoneNumber: phoneNumber ?? this.phoneNumber,
-      cpf: cpf,
       userType: userType,
       acceptedTerm: acceptedTerm,
       whatsappNotifications:

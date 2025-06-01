@@ -21,6 +21,23 @@ class ApiResponse<T> {
     this.timestamp,
     this.path,
   });
+
+  factory ApiResponse.fromJson(
+      Map<String, dynamic> json, T Function(Map<String, dynamic>) fromJsonT) {
+    return ApiResponse<T>(
+      isSuccess: json['isSuccess'] as bool,
+      message: json['message'] as String? ?? 'Operação realizada com sucesso',
+      data: json['data'] != null
+          ? fromJsonT(json['data'] as Map<String, dynamic>)
+          : null,
+      errors: json['errors'] as List<dynamic>?,
+      statusCode: json['statusCode'] as int?,
+      timestamp: json['timestamp'] != null
+          ? DateTime.parse(json['timestamp'] as String)
+          : null,
+      path: json['path'] as String?,
+    );
+  }
 }
 
 class ApiClient {
@@ -97,7 +114,7 @@ class ApiClient {
     Map<String, String>? headers,
     Object? body,
     bool requiresAuth = true,
-    required T Function(Map<String, dynamic> json) fromJsonT,
+    required T Function(Map<String, dynamic>) fromJsonT,
   }) async {
     try {
       final url = requiresAuth ? baseUrlAuth : baseUrl;
@@ -152,12 +169,7 @@ class ApiClient {
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final json = jsonDecode(response.body) as Map<String, dynamic>;
-        return ApiResponse<T>(
-          isSuccess: json['isSuccess'] as bool,
-          message:
-              json['message'] as String? ?? 'Operação realizada com sucesso',
-          data: fromJsonT(json),
-        );
+        return ApiResponse.fromJson(json, fromJsonT);
       }
 
       // Processa interceptors para erros

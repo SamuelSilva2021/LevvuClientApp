@@ -69,7 +69,7 @@ extension PermissionChecks on UserProvider {
   bool get isPartnerUser => isPartner;
 
   // Verificar se tem permissão para acessar área administrativa
-  bool get isAdmin => authData?.user.userType == UserType.admin;
+  bool get isAdmin => authData?.user.userType == UserType.backoffice;
 
   // Verificar permissões específicas
   bool hasPermission(String permission) {

@@ -74,19 +74,31 @@ class AuthRepository {
     return response;
   }
 
-  Future<String?> getAccessToken() async {
-    return await _authService.getAccessToken();
-  }
-
-  Future<String?> getRefreshToken() async {
-    return await _authService.getRefreshToken();
-  }
-
   Future<bool> isAuthenticated() async {
     return await _authService.isAuthenticated();
   }
 
   Future<void> logout() async {
     await _authService.clearAuthData();
+  }
+
+  Future<void> saveAuthData(AuthModel authData) async {
+    await _authService.saveAuthData(authData);
+  }
+
+  Future<AuthModel?> getAuthData() async {
+    return await _authService.getAuthData();
+  }
+
+  Future<void> clearAuthData() async {
+    await _authService.clearAuthData();
+  }
+
+  Future<String?> getToken() async {
+    return await _authService.getToken();
+  }
+
+  Future<String?> getRefreshToken() async {
+    return await _authService.getRefreshToken();
   }
 }

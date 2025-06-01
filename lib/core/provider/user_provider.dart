@@ -1,118 +1,133 @@
 import 'package:flutter/material.dart';
-import 'package:levvu_client/core/services/auth/auth_service.dart';
 import 'package:levvu_client/core/models/auth_model.dart';
+import 'package:levvu_client/core/models/user_login_response_model.dart';
 import 'package:levvu_client/core/models/user_model.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:levvu_client/core/repositories/auth_repository.dart';
 
 class UserProvider extends ChangeNotifier {
+  final AuthRepository _authRepository;
   AuthModel? _authData;
+  UserLoginResponseModel? _user;
   bool _isLoading = true;
 
-  //Getters
+  UserProvider(this._authRepository) {
+    _loadUserData();
+  }
+
   AuthModel? get authData => _authData;
-  bool get isAuthenticated => _authData != null;
+  UserLoginResponseModel? get user => _user;
+  bool get isAuthenticated => _authData != null && _user != null;
   bool get isLoading => _isLoading;
 
   // Dados do usuário para fácil acesso
   String get userName => _authData?.user.fullName ?? 'Usuário';
   String get userEmail => _authData?.user.email ?? '';
   String get userPhone => _authData?.user.phoneNumber ?? '';
-  String get userCpf => _authData?.user.cpf ?? '';
   bool get isClient => _authData?.user.userType == UserType.client;
   bool get isPartner => _authData?.user.userType == UserType.partner;
   String get userId => _authData?.user.id ?? '';
 
-  // Inicialização - carregar dados de autenticação
-  Future<void> initialize() async {
+  Future<void> _loadUserData() async {
     _isLoading = true;
     notifyListeners();
 
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final authService = AuthService(prefs);
-      final isAuthenticated = await authService.isAuthenticated();
-      if (!isAuthenticated) {
-        _authData = null;
-        return;
-      }
+    _authData = await _authRepository.getAuthData();
+    _user = _authData?.user;
 
-      // Carregar dados de autenticação
-      _authData = await authService.getAuthData();
-    } catch (e) {
-      debugPrint('Erro ao inicializar UserProvider: $e');
-      _authData = null;
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
+    _isLoading = false;
+    notifyListeners();
   }
 
-  // Atualizar dados após login
-  Future<void> updateAuthData() async {
+  Future<void> setUser(AuthModel authData) async {
     _isLoading = true;
     notifyListeners();
 
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final authService = AuthService(prefs);
-      _authData = await authService.getAuthData();
-    } catch (e) {
-      _authData = null;
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
+    await _authRepository.saveAuthData(authData);
+    _authData = authData;
+    _user = authData.user;
+
+    _isLoading = false;
+    notifyListeners();
   }
 
-  // Limpar dados após logout
   Future<void> logout() async {
-    final prefs = await SharedPreferences.getInstance();
-    final authService = AuthService(prefs);
-    await authService.clearAuthData();
+    _isLoading = true;
+    notifyListeners();
+
+    await _authRepository.logout();
     _authData = null;
+    _user = null;
+
+    _isLoading = false;
     notifyListeners();
   }
 
-  // Atualizar dados do perfil
+  Future<void> updateUser(UserLoginResponseModel updatedUser) async {
+    if (_authData != null) {
+      _isLoading = true;
+      notifyListeners();
+
+      final updatedAuthData = AuthModel(
+        token: _authData!.token,
+        refreshToken: _authData!.refreshToken,
+        user: updatedUser,
+        tokenExpiration: _authData!.tokenExpiration,
+      );
+      await setUser(updatedAuthData);
+
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
   Future<void> updateUserProfile({
     required String fullName,
     required String phoneNumber,
     required bool whatsappNotifications,
     required bool emailNotifications,
   }) async {
-    if (_authData == null) return;
+    if (_authData != null) {
+      _isLoading = true;
+      notifyListeners();
 
-    // Criar novo modelo de usuário com dados atualizados
-    final updatedUser = UserModel(
-      id: _authData!.user.id,
-      email: _authData!.user.email,
-      fullName: fullName,
-      cpf: _authData!.user.cpf,
-      phoneNumber: phoneNumber,
-      userType: _authData!.user.userType,
-      acceptedTerm: _authData!.user.acceptedTerm,
-      whatsappNotifications: whatsappNotifications,
-      emailNotifications: emailNotifications,
-      status: _authData!.user.status,
-      profileId: _authData!.user.profileId,
-    );
+      final updatedUser = UserLoginResponseModel(
+        id: _authData!.user.id,
+        fullName: fullName,
+        email: _authData!.user.email,
+        phoneNumber: phoneNumber,
+        userType: _authData!.user.userType,
+        whatsappNotifications: whatsappNotifications,
+        emailNotifications: emailNotifications,
+        acceptedTerm: _authData!.user.acceptedTerm,
+        status: _authData!.user.status,
+        profileId: _authData!.user.profileId,
+      );
 
-    // Criar novo modelo de autenticação com dados atualizados
-    final updatedAuthData = AuthModel(
-      accessToken: _authData!.accessToken,
-      refreshToken: _authData!.refreshToken,
-      tokenExpiration: _authData!.tokenExpiration,
-      user: updatedUser,
-    );
+      await updateUser(updatedUser);
 
-    // Salvar dados atualizados
-    final prefs = await SharedPreferences.getInstance();
-    final authService = AuthService(prefs);
-    await authService.saveAuthData(updatedAuthData);
-    _authData = updatedAuthData;
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> updateAuthData() async {
+    _isLoading = true;
     notifyListeners();
 
-    // Aqui poderia ter uma chamada para API para sincronizar com backend
-    // await ApiService.updateUserProfile(...);
+    _authData = await _authRepository.getAuthData();
+    _user = _authData?.user;
+
+    _isLoading = false;
+    notifyListeners();
+  }
+
+  Future<void> initialize() async {
+    _isLoading = true;
+    notifyListeners();
+
+    await _loadUserData();
+
+    _isLoading = false;
+    notifyListeners();
   }
 }

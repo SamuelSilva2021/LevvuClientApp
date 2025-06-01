@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/foundation.dart';
 
 class AuthService {
-  static const String _authDataKey = 'auth_data';
+  static const String _authKey = 'auth_data';
   final SharedPreferences _prefs;
 
   AuthService(this._prefs);
@@ -13,7 +13,7 @@ class AuthService {
     debugPrint('💾 Salvando dados de autenticação...');
     final json = authData.toJson();
     debugPrint('📦 Dados a serem salvos: $json');
-    await _prefs.setString(_authDataKey, jsonEncode(json));
+    await _prefs.setString(_authKey, jsonEncode(json));
     debugPrint('✅ Dados salvos com sucesso');
 
     // Verifica se os dados foram salvos corretamente
@@ -23,7 +23,7 @@ class AuthService {
 
   Future<AuthModel?> getAuthData() async {
     debugPrint('📖 Buscando dados de autenticação...');
-    final json = _prefs.getString(_authDataKey);
+    final json = _prefs.getString(_authKey);
     if (json == null) {
       debugPrint('❌ Nenhum dado de autenticação encontrado');
       return null;
@@ -31,7 +31,7 @@ class AuthService {
 
     debugPrint('📖 Dados de autenticação encontrados: $json');
     try {
-      final data = jsonDecode(json);
+      final Map<String, dynamic> data = jsonDecode(json);
       debugPrint('📦 Parsing AuthModel from JSON: $data');
       final authData = AuthModel.fromJson(data);
       debugPrint('✅ Dados de autenticação parseados: ${authData.toJson()}');
@@ -42,11 +42,11 @@ class AuthService {
     }
   }
 
-  Future<String?> getAccessToken() async {
+  Future<String?> getToken() async {
     final authData = await getAuthData();
     debugPrint(
-        '🔑 Obtendo access token: ${authData?.accessToken != null ? 'Token encontrado' : 'Token não encontrado'}');
-    return authData?.accessToken;
+        '🔑 Obtendo token: ${authData?.token != null ? 'Token encontrado' : 'Token não encontrado'}');
+    return authData?.token;
   }
 
   Future<String?> getRefreshToken() async {
@@ -58,14 +58,21 @@ class AuthService {
 
   Future<bool> isAuthenticated() async {
     final authData = await getAuthData();
-    final isAuth = authData != null && authData.accessToken != null;
+    final isAuth = authData != null && authData.token != null;
     debugPrint('🔒 Verificando autenticação: $isAuth');
+
+    if (isAuth && authData!.isTokenExpired) {
+      debugPrint('⚠️ Token expirado');
+      await clearAuthData();
+      return false;
+    }
+
     return isAuth;
   }
 
   Future<void> clearAuthData() async {
     debugPrint('🧹 Limpando dados de autenticação...');
-    await _prefs.remove(_authDataKey);
+    await _prefs.remove(_authKey);
     debugPrint('✅ Dados de autenticação removidos');
   }
 }
