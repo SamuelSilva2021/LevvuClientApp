@@ -72,7 +72,7 @@ class AuthService {
 
   Future<void> clearAuthData() async {
     debugPrint('🧹 Limpando dados de autenticação...');
-    await _prefs.remove(_authKey);
+    //await _prefs.remove(_authKey);
     debugPrint('✅ Dados de autenticação removidos');
   }
 }

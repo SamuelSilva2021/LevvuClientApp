@@ -14,16 +14,46 @@ class EnvConfig {
 
   static bool get isEmulator {
     if (Platform.isAndroid) {
-      return Platform.environment.containsKey('ANDROID_EMULATOR');
+      try {
+        final buildTags = Platform.environment['BUILD_TAGS'] ?? '';
+        final buildType = Platform.environment['BUILD_TYPE'] ?? '';
+        final buildFingerprint =
+            Platform.environment['BUILD_FINGERPRINT'] ?? '';
+        final buildHardware = Platform.environment['HARDWARE'] ?? '';
+        final buildProduct = Platform.environment['PRODUCT'] ?? '';
+        final buildDevice = Platform.environment['DEVICE'] ?? '';
+        final buildModel = Platform.environment['MODEL'] ?? '';
+        final buildManufacturer = Platform.environment['MANUFACTURER'] ?? '';
+        final buildBrand = Platform.environment['BRAND'] ?? '';
+
+        return buildTags.contains('test-keys') ||
+            buildType.contains('userdebug') ||
+            buildFingerprint.contains('test-keys') ||
+            buildHardware.contains('goldfish') ||
+            buildProduct.contains('sdk_gphone') ||
+            buildDevice.contains('generic') ||
+            buildModel.contains('sdk_gphone') ||
+            buildManufacturer.contains('Google') ||
+            buildBrand.contains('generic');
+      } catch (e) {
+        debugPrint('Erro ao verificar emulador: $e');
+        return false;
+      }
     }
+
+    if (Platform.isWindows) {
+      return true;
+    }
+
     return false;
   }
 
   static String get _baseUrl {
+    final customBaseUrl = _getEnvValue('BASE_API_URL_FISICAL_DEVICE');
     if (isEmulator) {
       return 'http://10.0.2.2';
     }
-    return 'http://192.168.0.100';
+    return customBaseUrl.isNotEmpty ? customBaseUrl : 'http://192.168.0.100';
   }
 
   static String _getEnvValue(String key) {

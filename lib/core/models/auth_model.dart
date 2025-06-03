@@ -1,6 +1,7 @@
-import 'dart:convert';
 import 'package:levvu_client/core/models/user_login_response_model.dart';
-import 'package:levvu_client/core/models/user_enum.dart';
+import 'package:levvu_client/core/services/jwt/jwt_service.dart';
+import 'package:levvu_client/core/services/jwt/jwt_payload_converter.dart';
+import 'package:flutter/foundation.dart';
 
 class AuthModel {
   final String token;
@@ -18,35 +19,31 @@ class AuthModel {
   bool get isTokenExpired => DateTime.now().isAfter(tokenExpiration);
 
   factory AuthModel.fromJson(Map<String, dynamic> json) {
-    final token = json['token'] as String;
-    final tokenParts = token.split('.');
-    final payload = jsonDecode(utf8.decode(base64Url.decode(tokenParts[1])));
+    try {
+      final token = json['token'] as String;
+      final payload = JwtService.decodePayload(token);
+      final user = JwtPayloadConverter.convertToUser(payload);
 
-    final user = UserLoginResponseModel(
-      id: payload[
-              'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier']
-          as String,
-      email: payload[
-              'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress']
-          as String,
-      fullName:
-          payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name']
-              as String,
-      phoneNumber: '', // Não disponível no token
-      userType: EUserType.client, // Valor padrão
-      acceptedTerm: true, // Valor padrão
-      whatsappNotifications: true, // Valor padrão
-      emailNotifications: true, // Valor padrão
-      status: EUserStatusTypes.active, // Valor padrão
-      profileId: '', // Não disponível no token
-    );
+      final refreshToken = json['refreshToken']?.toString();
+      if (refreshToken == null || refreshToken.isEmpty) {
+        throw const FormatException('Refresh token não encontrado ou inválido');
+      }
 
-    return AuthModel(
-      token: token,
-      refreshToken: json['refreshToken'] as String,
-      tokenExpiration: DateTime.parse(json['tokenExpiration'] as String),
-      user: user,
-    );
+      final tokenExpiration = json['tokenExpiration']?.toString();
+      if (tokenExpiration == null) {
+        throw const FormatException('Data de expiração do token não encontrada');
+      }
+
+      return AuthModel(
+        token: token,
+        refreshToken: refreshToken,
+        tokenExpiration: DateTime.parse(tokenExpiration),
+        user: user,
+      );
+    } catch (e) {
+      debugPrint('❌ Erro ao processar dados de autenticação: $e');
+      rethrow;
+    }
   }
 
   Map<String, dynamic> toJson() {

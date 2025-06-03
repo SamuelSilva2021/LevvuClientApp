@@ -23,13 +23,11 @@ class ApiResponse<T> {
   });
 
   factory ApiResponse.fromJson(
-      Map<String, dynamic> json, T Function(Map<String, dynamic>) fromJsonT) {
+      Map<String, dynamic> json, T Function(dynamic) fromJsonT) {
     return ApiResponse<T>(
       isSuccess: json['isSuccess'] as bool,
       message: json['message'] as String? ?? 'Operação realizada com sucesso',
-      data: json['data'] != null
-          ? fromJsonT(json['data'] as Map<String, dynamic>)
-          : null,
+      data: json['data'] != null ? fromJsonT(json['data']) : null,
       errors: json['errors'] as List<dynamic>?,
       statusCode: json['statusCode'] as int?,
       timestamp: json['timestamp'] != null
@@ -114,13 +112,15 @@ class ApiClient {
     Map<String, String>? headers,
     Object? body,
     bool requiresAuth = true,
-    required T Function(Map<String, dynamic>) fromJsonT,
+    bool isLogin = false,
+    required T Function(dynamic) fromJsonT,
   }) async {
     try {
-      final url = requiresAuth ? baseUrlAuth : baseUrl;
+      final url = isLogin ? baseUrlAuth : baseUrl;
       final uri = Uri.parse('$url$path');
       final requestHeaders = {
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
         ...?headers,
       };
 
@@ -168,6 +168,13 @@ class ApiClient {
       }
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
+        if (response.body.isEmpty) {
+          return ApiResponse<T>(
+            isSuccess: true,
+            message: 'Operação realizada com sucesso',
+            data: null,
+          );
+        }
         final json = jsonDecode(response.body) as Map<String, dynamic>;
         return ApiResponse.fromJson(json, fromJsonT);
       }

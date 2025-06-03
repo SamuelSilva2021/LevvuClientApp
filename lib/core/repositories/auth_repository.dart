@@ -2,6 +2,7 @@ import 'package:levvu_client/core/models/auth_model.dart';
 import 'package:levvu_client/core/models/user_register_model.dart';
 import 'package:levvu_client/core/network/api_client.dart';
 import 'package:levvu_client/core/services/auth/auth_service.dart';
+import 'package:flutter/foundation.dart';
 
 class AuthRepository {
   final ApiClient _apiClient;
@@ -23,6 +24,7 @@ class AuthRepository {
       },
       requiresAuth: false,
       fromJsonT: (json) => AuthModel.fromJson(json),
+      isLogin: true,
     );
 
     if (response.isSuccess && response.data != null) {
@@ -49,29 +51,27 @@ class AuthRepository {
   }
 
   Future<ApiResponse<AuthModel>> refreshToken() async {
-    final refreshToken = await _authService.getRefreshToken();
-    if (refreshToken == null) {
-      return ApiResponse(
+    final authData = await _authService.getAuthData();
+    if (authData == null) {
+      return ApiResponse<AuthModel>(
         isSuccess: false,
-        message: 'Refresh token não encontrado',
+        message: 'Usuário não autenticado',
+        data: null,
       );
     }
 
-    final response = await _apiClient.request<AuthModel>(
+    debugPrint(
+        '🔄 Obtendo refresh token: ${authData.refreshToken.isNotEmpty ? 'Token encontrado' : 'Token não encontrado'}');
+    return await _apiClient.request<AuthModel>(
       method: 'POST',
       path: '/api/auth/refresh-token',
       body: {
-        'refreshToken': refreshToken,
+        'refreshToken': authData.refreshToken,
       },
       requiresAuth: false,
+      isLogin: true,
       fromJsonT: (json) => AuthModel.fromJson(json),
     );
-
-    if (response.isSuccess && response.data != null) {
-      await _authService.saveAuthData(response.data!);
-    }
-
-    return response;
   }
 
   Future<bool> isAuthenticated() async {

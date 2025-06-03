@@ -219,6 +219,13 @@ class _SolicitacaoFretePageState extends State<SolicitacaoFretePage> {
         specialPackaging: _specialPackaging,
         observations: _observationsController.text,
         photoUrls: _photoUrls.where((url) => url.isNotEmpty).toList(),
+        vehicleType: VehicleType.van,
+        description: _itemDescriptionController.text,
+        cargoType: _selectedServiceType,
+        weight: 0.0,
+        volume: 0.0,
+        imageUrls: [],
+        cargoItems: [],
       );
 
       // Enviar solicitação para a API
@@ -479,8 +486,8 @@ class _SolicitacaoFretePageState extends State<SolicitacaoFretePage> {
 
                     // Detalhes da Carga
                     CustomTextField(
-                      labelText: 'Detalhes da Carga',
-                      hintText: 'Descrição dos itens',
+                      label: 'Detalhes da Carga',
+                      hint: 'Descrição dos itens',
                       controller: _itemDescriptionController,
                       keyboardType: TextInputType.multiline,
                     ),
@@ -550,8 +557,8 @@ class _SolicitacaoFretePageState extends State<SolicitacaoFretePage> {
 
                     // Observações
                     CustomTextField(
-                      labelText: 'Observações',
-                      hintText: 'Informações adicionais para o entregador',
+                      label: 'Observações',
+                      hint: 'Informações adicionais para o entregador',
                       controller: _observationsController,
                       keyboardType: TextInputType.multiline,
                     ),
