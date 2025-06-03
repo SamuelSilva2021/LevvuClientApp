@@ -16,7 +16,6 @@ class CadastroClientePage extends StatefulWidget {
 
 class _CadastroClientePageState extends State<CadastroClientePage> {
   final _formKey = GlobalKey<FormState>();
-  final _scaffoldKey = GlobalKey<ScaffoldMessengerState>();
   final _nomeController = TextEditingController();
   final _emailController = TextEditingController();
   final _telefoneController = TextEditingController();
@@ -81,96 +80,92 @@ class _CadastroClientePageState extends State<CadastroClientePage> {
       context: context,
       userModel: userModel,
       navigateToLogin: () => Navigator.of(context).pop(),
-      scaffoldKey: _scaffoldKey,
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return ScaffoldMessenger(
-      key: _scaffoldKey,
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Cadastro de Cliente'),
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Cadastro de Cliente'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).pop(),
         ),
-        body: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Cabeçalho
-                Text(
-                  'Crie sua conta',
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.bold,
-                      ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Preencha os campos abaixo para se cadastrar',
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: AppColors.textSecondary,
-                      ),
-                ),
-                const SizedBox(height: 24),
+      ),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Cabeçalho
+              Text(
+                'Crie sua conta',
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Preencha os campos abaixo para se cadastrar',
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+              ),
+              const SizedBox(height: 24),
 
-                // Formulário
-                RegisterForm(
-                  formKey: _formKey,
-                  nomeController: _nomeController,
-                  emailController: _emailController,
-                  telefoneController: _telefoneController,
-                  cpfController: _cpfController,
-                  senhaController: _senhaController,
-                  confirmarSenhaController: _confirmarSenhaController,
-                ),
-                const SizedBox(height: 24),
+              // Formulário
+              RegisterForm(
+                formKey: _formKey,
+                nomeController: _nomeController,
+                emailController: _emailController,
+                telefoneController: _telefoneController,
+                cpfController: _cpfController,
+                senhaController: _senhaController,
+                confirmarSenhaController: _confirmarSenhaController,
+              ),
+              const SizedBox(height: 24),
 
-                // Opções
-                RegisterOptions(
-                  aceitaTermos: _aceitaTermos,
-                  receberNotificacoes: _receberNotificacoes,
-                  onAceitaTermosChanged: (value) =>
-                      setState(() => _aceitaTermos = value),
-                  onReceberNotificacoesChanged: (value) =>
-                      setState(() => _receberNotificacoes = value),
-                ),
-                const SizedBox(height: 24),
+              // Opções
+              RegisterOptions(
+                aceitaTermos: _aceitaTermos,
+                receberNotificacoes: _receberNotificacoes,
+                onAceitaTermosChanged: (value) =>
+                    setState(() => _aceitaTermos = value),
+                onReceberNotificacoesChanged: (value) =>
+                    setState(() => _receberNotificacoes = value),
+              ),
+              const SizedBox(height: 24),
 
-                // Botão de Cadastro
-                Consumer<RegisterController>(
-                  builder: (context, controller, _) {
-                    return Column(
-                      children: [
-                        if (controller.errorMessage != null) ...[
-                          Text(
-                            controller.errorMessage!,
-                            style: const TextStyle(
-                              color: Colors.red,
-                              fontSize: 14,
-                            ),
-                            textAlign: TextAlign.center,
+              // Botão de Cadastro
+              Consumer<RegisterController>(
+                builder: (context, controller, _) {
+                  return Column(
+                    children: [
+                      if (controller.errorMessage != null) ...[
+                        Text(
+                          controller.errorMessage!,
+                          style: const TextStyle(
+                            color: Colors.red,
+                            fontSize: 14,
                           ),
-                          const SizedBox(height: 16),
-                        ],
-                        PrimaryButton(
-                          label: 'CADASTRAR',
-                          onPressed:
-                              controller.isLoading ? null : _registrarUsuario,
-                          isLoading: controller.isLoading,
+                          textAlign: TextAlign.center,
                         ),
+                        const SizedBox(height: 16),
                       ],
-                    );
-                  },
-                ),
-              ],
-            ),
+                      PrimaryButton(
+                        label: 'CADASTRAR',
+                        onPressed:
+                            controller.isLoading ? null : _registrarUsuario,
+                        isLoading: controller.isLoading,
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ],
           ),
         ),
       ),

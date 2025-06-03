@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:levvu_client/core/constants/app_colors.dart';
 import 'package:levvu_client/core/provider/user_provider.dart';
+import 'package:levvu_client/presentation/pages/freight_request_page.dart';
 import 'package:levvu_client/presentation/pages/historico_fretes_page.dart';
 import 'package:levvu_client/presentation/pages/perfil_usuario_page.dart';
 import 'package:levvu_client/presentation/pages/solicitacao_frete_page.dart';
@@ -167,7 +168,7 @@ class HomeContent extends StatelessWidget {
               onTap: () {
                 Navigator.of(context).push(
                   MaterialPageRoute(
-                    builder: (context) => const SolicitacaoFretePage(),
+                    builder: (context) => const FreightRequestPage(),
                   ),
                 );
               },

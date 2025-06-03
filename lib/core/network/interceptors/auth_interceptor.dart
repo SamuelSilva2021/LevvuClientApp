@@ -2,10 +2,12 @@ import 'package:flutter/foundation.dart';
 import 'package:levvu_client/core/repositories/auth_repository.dart';
 import 'package:levvu_client/core/network/interceptors/interceptor.dart';
 import 'package:levvu_client/core/network/api_client.dart';
+import 'package:levvu_client/core/models/auth_model.dart';
 
 class AuthInterceptor implements Interceptor {
   final AuthRepository _authRepository;
   bool _isRefreshing = false;
+  String? _lastRefreshedToken;
 
   AuthInterceptor(this._authRepository);
 
@@ -26,11 +28,11 @@ class AuthInterceptor implements Interceptor {
       return null;
     }
 
-    final token = await _authRepository.getToken();
+    final authData = await _authRepository.getAuthData();
     debugPrint(
-        '🔑 Token para requisição $path: ${token != null ? 'Encontrado' : 'Não encontrado'}');
+        '🔑 Token para requisição $path: ${authData != null ? 'Encontrado' : 'Não encontrado'}');
 
-    if (token == null || token.isEmpty) {
+    if (authData == null) {
       debugPrint('❌ Token não encontrado para a requisição: $path');
       return ApiResponse(
         isSuccess: false,
@@ -39,8 +41,42 @@ class AuthInterceptor implements Interceptor {
       );
     }
 
-    headers['Authorization'] = 'Bearer $token';
-    debugPrint('🔑 Token adicionado aos headers: Bearer $token');
+    // Verifica se o token está expirado
+    if (authData.isTokenExpired) {
+      debugPrint('⚠️ Token expirado, tentando renovar...');
+      try {
+        _isRefreshing = true;
+        final response = await _authRepository.refreshToken();
+
+        if (!response.isSuccess || response.data == null) {
+          await _authRepository.logout();
+          return ApiResponse(
+            isSuccess: false,
+            message: 'Sessão expirada. Por favor, faça login novamente.',
+            data: null,
+          );
+        }
+
+        _lastRefreshedToken = response.data!.token;
+        headers['Authorization'] = 'Bearer ${response.data!.token}';
+        debugPrint(
+            '🔄 Token renovado com sucesso: Bearer ${response.data!.token}');
+        return null;
+      } catch (e) {
+        debugPrint('❌ Erro ao renovar token: $e');
+        await _authRepository.logout();
+        return ApiResponse(
+          isSuccess: false,
+          message: 'Sessão expirada. Por favor, faça login novamente.',
+          data: null,
+        );
+      } finally {
+        _isRefreshing = false;
+      }
+    }
+
+    headers['Authorization'] = 'Bearer ${authData.token}';
+    debugPrint('🔑 Token adicionado aos headers: Bearer ${authData.token}');
     return null;
   }
 
@@ -51,12 +87,13 @@ class AuthInterceptor implements Interceptor {
     required String body,
   }) async {
     // Se não for erro de autenticação, retorna null para continuar o fluxo
-    if (statusCode != 401) {
+    if (statusCode != 401 && statusCode != 404) {
       return null;
     }
 
     // Se já estiver renovando o token, retorna erro
     if (_isRefreshing) {
+      await _authRepository.logout();
       return ApiResponse(
         isSuccess: false,
         message: 'Sessão expirada. Por favor, faça login novamente.',
@@ -66,19 +103,8 @@ class AuthInterceptor implements Interceptor {
 
     try {
       _isRefreshing = true;
-      final refreshToken = await _authRepository.getRefreshToken();
-
-      // Verifica se o refresh token existe e não está vazio
-      if (refreshToken == null || refreshToken.isEmpty) {
-        await _authRepository.logout();
-        return ApiResponse(
-          isSuccess: false,
-          message: 'Sessão expirada. Por favor, faça login novamente.',
-          data: null,
-        );
-      }
-
       final response = await _authRepository.refreshToken();
+
       if (!response.isSuccess || response.data == null) {
         await _authRepository.logout();
         return ApiResponse(
@@ -88,13 +114,15 @@ class AuthInterceptor implements Interceptor {
         );
       }
 
-      // Retorna null para continuar o fluxo com o novo token
+      _lastRefreshedToken = response.data!.token;
+      debugPrint('🔄 Token renovado com sucesso');
       return null;
     } catch (e) {
+      debugPrint('❌ Erro ao renovar token: $e');
       await _authRepository.logout();
       return ApiResponse(
         isSuccess: false,
-        message: 'Erro ao renovar sessão: ${e.toString()}',
+        message: 'Sessão expirada. Por favor, faça login novamente.',
         data: null,
       );
     } finally {
@@ -120,19 +148,8 @@ class AuthInterceptor implements Interceptor {
 
     try {
       _isRefreshing = true;
-      final refreshToken = await _authRepository.getRefreshToken();
-
-      // Verifica se o refresh token existe e não está vazio
-      if (refreshToken == null || refreshToken.isEmpty) {
-        await _authRepository.logout();
-        return ApiResponse(
-          isSuccess: false,
-          message: 'Sessão expirada. Por favor, faça login novamente.',
-          data: null,
-        );
-      }
-
       final response = await _authRepository.refreshToken();
+
       if (!response.isSuccess || response.data == null) {
         await _authRepository.logout();
         return ApiResponse(
@@ -142,7 +159,8 @@ class AuthInterceptor implements Interceptor {
         );
       }
 
-      // Retorna null para continuar o fluxo com o novo token
+      _lastRefreshedToken = response.data!.token;
+      debugPrint('🔄 Token renovado com sucesso');
       return null;
     } catch (e) {
       await _authRepository.logout();

@@ -82,7 +82,7 @@ class _HistoricoFretesPageState extends State<HistoricoFretesPage>
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(
+                        const Icon(
                           Icons.error_outline,
                           size: 48,
                           color: AppColors.error,
@@ -91,7 +91,7 @@ class _HistoricoFretesPageState extends State<HistoricoFretesPage>
                         Text(
                           _errorMessage!,
                           textAlign: TextAlign.center,
-                          style: TextStyle(
+                          style: const TextStyle(
                             color: AppColors.textPrimary,
                             fontSize: 16,
                           ),

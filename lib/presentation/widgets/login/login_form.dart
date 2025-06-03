@@ -30,22 +30,21 @@ class _LoginFormState extends State<LoginForm> {
         children: [
           CustomTextField(
             controller: widget.emailController,
-            labelText: AppStrings.emailLabel,
-            hintText: AppStrings.emailHint,
-            prefixIcon: Icons.email_outlined,
+            label: AppStrings.emailLabel,
+            hint: AppStrings.emailHint,
             keyboardType: TextInputType.emailAddress,
             validator: (value) => Validators.validateEmail(value),
           ),
           const SizedBox(height: 16),
           CustomTextField(
             controller: widget.passwordController,
-            labelText: AppStrings.passwordLabel,
-            hintText: AppStrings.passwordHint,
-            prefixIcon: Icons.lock_outline,
+            label: AppStrings.passwordLabel,
+            hint: AppStrings.passwordHint,
+            keyboardType: TextInputType.visiblePassword,
             obscureText: _obscurePassword,
-            suffixIcon: _obscurePassword
+            suffixIcon: Icon(_obscurePassword
                 ? Icons.visibility_outlined
-                : Icons.visibility_off_outlined,
+                : Icons.visibility_off_outlined),
             onSuffixIconPressed: () =>
                 setState(() => _obscurePassword = !_obscurePassword),
             validator: (value) => Validators.validatePassword(value),

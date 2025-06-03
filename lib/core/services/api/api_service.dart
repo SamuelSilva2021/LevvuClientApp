@@ -80,6 +80,7 @@ class ApiService {
         'refreshToken': refreshToken,
       },
       requiresAuth: false,
+      isLogin: true,
       fromJsonT: (json) => AuthModel.fromJson(json),
     );
   }
@@ -96,14 +97,29 @@ class ApiService {
   }
 
   Future<ApiResponse<List<FreightRequestResponse>>> getClientFreights() async {
-    return await _apiClient.request<List<FreightRequestResponse>>(
-      method: 'GET',
-      path: ApiRoutes.myRequests,
-      requiresAuth: true,
-      fromJsonT: (json) => (json['data'] as List)
-          .map((item) => FreightRequestResponse.fromJson(item))
-          .toList(),
-    );
+    try {
+      return await _apiClient.request<List<FreightRequestResponse>>(
+        method: 'GET',
+        path: ApiRoutes.myRequests,
+        requiresAuth: true,
+        fromJsonT: (json) {
+          if (json is! List) {
+            throw const FormatException(
+                'Resposta inválida: esperava uma lista de fretes');
+          }
+          return (json as List)
+              .map((item) =>
+                  FreightRequestResponse.fromJson(item as Map<String, dynamic>))
+              .toList();
+        },
+      );
+    } catch (e) {
+      return ApiResponse<List<FreightRequestResponse>>(
+        isSuccess: false,
+        message: 'Erro ao buscar fretes: ${e.toString()}',
+        data: [],
+      );
+    }
   }
 
   // Método público para verificação manual (opcional)

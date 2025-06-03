@@ -16,7 +16,6 @@ class RegisterController with ChangeNotifier {
     required BuildContext context,
     required UserRegisterModel userModel,
     required Function navigateToLogin,
-    required GlobalKey<ScaffoldMessengerState> scaffoldKey,
   }) async {
     _isLoading = true;
     _errorMessage = null;
@@ -32,7 +31,7 @@ class RegisterController with ChangeNotifier {
       final response = await authRepository.register(userModel);
 
       if (response.isSuccess) {
-        scaffoldKey.currentState?.showSnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(response.message),
             backgroundColor: Colors.green,
@@ -44,7 +43,7 @@ class RegisterController with ChangeNotifier {
       }
 
       _errorMessage = response.message;
-      scaffoldKey.currentState?.showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(response.message),
           backgroundColor: Colors.red,
@@ -53,7 +52,7 @@ class RegisterController with ChangeNotifier {
       return false;
     } catch (e) {
       _errorMessage = 'Erro ao realizar cadastro: ${e.toString()}';
-      scaffoldKey.currentState?.showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(_errorMessage!),
           backgroundColor: Colors.red,
