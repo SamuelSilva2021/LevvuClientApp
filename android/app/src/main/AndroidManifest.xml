@@ -12,6 +12,22 @@
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:usesCleartextTraffic="true">
+        
+        <!-- Google Maps API Key -->
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyAwV5JLtIB-MzLA7wKUS1WHijzLIsEhhnM" />
+            
+        <!-- Google Maps Version -->
+        <meta-data
+            android:name="com.google.android.gms.version"
+            android:value="@integer/google_play_services_version" />
+
+        <!-- Google Maps Map ID -->
+        <meta-data
+            android:name="com.google.android.maps.v2.MAP_ID"
+            android:value="levvu_client_map" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"

@@ -34,7 +34,6 @@ class AuthService {
       final Map<String, dynamic> data = jsonDecode(json);
       debugPrint('📦 Parsing AuthModel from JSON: $data');
       final authData = AuthModel.fromJson(data);
-      debugPrint('✅ Dados de autenticação parseados: ${authData.toJson()}');
       return authData;
     } catch (e) {
       debugPrint('❌ Erro ao parsear dados de autenticação: $e');

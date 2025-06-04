@@ -9,6 +9,7 @@ import 'package:levvu_client/presentation/widgets/freight/address_form.dart';
 import 'package:levvu_client/presentation/widgets/freight/address_picker.dart';
 import 'package:levvu_client/presentation/widgets/freight/cargo_items_form.dart';
 import 'package:levvu_client/presentation/widgets/freight/freight_details_form.dart';
+import 'package:levvu_client/presentation/widgets/freight/modern_route_map.dart';
 import 'package:levvu_client/presentation/widgets/freight/photo_upload.dart';
 import 'package:levvu_client/presentation/widgets/loading_button.dart';
 import 'package:levvu_client/presentation/widgets/success_message.dart';
@@ -301,6 +302,18 @@ class _FreightRequestPageState extends State<FreightRequestPage> {
                     },
                     validator: _validateRequired,
                   ),
+                  if (_pickupAddressController.text.isNotEmpty &&
+                      _deliveryAddressController.text.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      child: SizedBox(
+                        height: 300,
+                        child: ModernRouteMap(
+                          originAddress: _pickupAddressController.text,
+                          destinationAddress: _deliveryAddressController.text,
+                        ),
+                      ),
+                    ),
                   const SizedBox(height: 24),
                   FreightDetailsForm(
                     serviceTypeController: _serviceTypeController,
