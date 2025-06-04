@@ -4,6 +4,7 @@ import 'package:levvu_client/presentation/widgets/custom_text_field.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'dart:async';
+import 'dart:developer' as developer;
 
 class AddressPicker extends StatefulWidget {
   final TextEditingController controller;
@@ -27,6 +28,7 @@ class _AddressPickerState extends State<AddressPicker> {
   final _searchController = TextEditingController();
   final List<Map<String, dynamic>> _suggestions = [];
   bool _isLoading = false;
+  String? _statusMessage;
 
   @override
   void dispose() {
@@ -37,20 +39,31 @@ class _AddressPickerState extends State<AddressPicker> {
   Future<void> _getCurrentLocation() async {
     setState(() {
       _isLoading = true;
+      _statusMessage = 'Verificando serviço de localização...';
     });
 
     try {
       // Verifica se o serviço de localização está ativado
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      developer.log('Serviço de localização ativado: $serviceEnabled');
+
       if (!serviceEnabled) {
         throw Exception(
             'O serviço de localização está desativado. Por favor, ative o GPS.');
       }
 
+      setState(() {
+        _statusMessage = 'Verificando permissões...';
+      });
+
       // Verifica permissão de localização
       LocationPermission permission = await Geolocator.checkPermission();
+      developer.log('Permissão inicial: $permission');
+
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
+        developer.log('Permissão após solicitação: $permission');
+
         if (permission == LocationPermission.denied) {
           throw Exception(
               'Permissão de localização negada. Por favor, permita o acesso à localização nas configurações do aplicativo.');
@@ -62,17 +75,28 @@ class _AddressPickerState extends State<AddressPicker> {
             'Permissão de localização permanentemente negada. Por favor, permita o acesso à localização nas configurações do aplicativo.');
       }
 
+      setState(() {
+        _statusMessage = 'Obtendo localização atual...';
+      });
+
       // Obtém a posição atual
       final position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
         timeLimit: const Duration(seconds: 10),
       );
+      developer
+          .log('Posição obtida: ${position.latitude}, ${position.longitude}');
+
+      setState(() {
+        _statusMessage = 'Convertendo coordenadas em endereço...';
+      });
 
       // Converte as coordenadas em endereço
       final placemarks = await placemarkFromCoordinates(
         position.latitude,
         position.longitude,
       );
+      developer.log('Placemarks obtidos: ${placemarks.length}');
 
       if (placemarks.isNotEmpty) {
         final place = placemarks.first;
@@ -84,6 +108,8 @@ class _AddressPickerState extends State<AddressPicker> {
             place.administrativeArea,
           if (place.country?.isNotEmpty ?? false) place.country,
         ].where((s) => s != null).join(', ');
+
+        developer.log('Endereço obtido: $address');
 
         if (address.isEmpty) {
           throw Exception(
@@ -98,6 +124,7 @@ class _AddressPickerState extends State<AddressPicker> {
             'Não foi possível obter o endereço atual. Por favor, tente novamente.');
       }
     } on TimeoutException {
+      developer.log('Timeout ao obter localização');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
@@ -106,6 +133,7 @@ class _AddressPickerState extends State<AddressPicker> {
         ),
       );
     } catch (e) {
+      developer.log('Erro ao obter localização: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(e.toString().replaceAll('Exception: ', '')),
@@ -115,6 +143,7 @@ class _AddressPickerState extends State<AddressPicker> {
     } finally {
       setState(() {
         _isLoading = false;
+        _statusMessage = null;
       });
     }
   }
@@ -187,10 +216,25 @@ class _AddressPickerState extends State<AddressPicker> {
             ),
           ],
         ),
-        if (_isLoading)
-          const Padding(
-            padding: EdgeInsets.all(8.0),
-            child: CircularProgressIndicator(),
+        if (_isLoading || _statusMessage != null)
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Column(
+              children: [
+                const CircularProgressIndicator(),
+                if (_statusMessage != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: Text(
+                      _statusMessage!,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           ),
         if (_suggestions.isNotEmpty)
           Expanded(
