@@ -11,7 +11,6 @@ class LoggingInterceptor implements Interceptor {
     Map<String, dynamic>? body,
   }) async {
     debugPrint('🌐 [REQUEST] $method $path');
-    debugPrint('📦 Headers: $headers');
     if (body != null) {
       debugPrint('📦 Body: $body');
     }
@@ -25,8 +24,6 @@ class LoggingInterceptor implements Interceptor {
     required String body,
   }) async {
     debugPrint('✅ [RESPONSE] Status: $statusCode');
-    debugPrint('📦 Headers: $headers');
-    debugPrint('📦 Body: $body');
     return null;
   }
 

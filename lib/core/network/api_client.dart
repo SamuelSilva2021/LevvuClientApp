@@ -124,9 +124,6 @@ class ApiClient {
         ...?headers,
       };
 
-      debugPrint('🌐 [REQUEST] $method $uri');
-      debugPrint('📦 Headers iniciais: $requestHeaders');
-
       // Processa interceptors antes de enviar a requisição
       for (final interceptor in _interceptors) {
         final result = await interceptor.onRequest(
@@ -140,7 +137,6 @@ class ApiClient {
         }
       }
 
-      debugPrint('📦 Headers finais: $requestHeaders');
 
       final request = http.Request(method, uri);
       request.headers.addAll(requestHeaders);
@@ -152,8 +148,6 @@ class ApiClient {
       final response = await http.Response.fromStream(streamedResponse);
 
       debugPrint('✅ [RESPONSE] Status: ${response.statusCode}');
-      debugPrint('📦 Headers: ${response.headers}');
-      debugPrint('📦 Body: ${response.body}');
 
       // Processa interceptors para a resposta
       for (final interceptor in _interceptors) {
