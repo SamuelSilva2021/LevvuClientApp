@@ -1,10 +1,11 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:levvu_client/core/config/maps_config.dart';
-import 'dart:async';
+import 'dart:ui' as ui;
 
 class ModernRouteMap extends StatefulWidget {
   final String originAddress;
@@ -31,7 +32,6 @@ class _ModernRouteMapState extends State<ModernRouteMap>
   List<LatLng> _routePoints = [];
   String _distance = '';
   String _duration = '';
-  String _price = 'R\$ 15,50'; // Preço simulado
   bool _showRouteDetails = true;
   bool _isMapReady = false;
   late AnimationController _slideController;
@@ -479,7 +479,7 @@ class _ModernRouteMapState extends State<ModernRouteMap>
             title: 'Origem',
             snippet: widget.originAddress,
           ),
-          icon: await _createCustomMarker(Colors.green, Icons.trip_origin),
+          icon: await _createCustomMarker(Colors.green, 20),
         ),
         Marker(
           markerId: const MarkerId('destination'),
@@ -488,7 +488,7 @@ class _ModernRouteMapState extends State<ModernRouteMap>
             title: 'Destino',
             snippet: widget.destinationAddress,
           ),
-          icon: await _createCustomMarker(Colors.red, Icons.location_on),
+          icon: await _createCustomMarker(Colors.red, 20),
         ),
       };
 
@@ -539,14 +539,20 @@ class _ModernRouteMapState extends State<ModernRouteMap>
   }
 
   Future<BitmapDescriptor> _createCustomMarker(
-      Color color, IconData icon) async {
-    // Aqui você pode criar marcadores customizados mais elaborados
-    // Por enquanto, usando os padrões com cores personalizadas
-    if (color == Colors.green) {
-      return BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen);
-    } else {
-      return BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed);
-    }
+      Color color, double radius) async {
+    final ui.PictureRecorder pictureRecorder = ui.PictureRecorder();
+    final Canvas canvas = Canvas(pictureRecorder);
+    final Paint paint = Paint()..color = color;
+    final double circleRadius = radius;
+
+    canvas.drawCircle(Offset(circleRadius, circleRadius), circleRadius, paint);
+
+    final img = await pictureRecorder
+        .endRecording()
+        .toImage(circleRadius.toInt() * 2, circleRadius.toInt() * 2);
+    final data = await img.toByteData(format: ui.ImageByteFormat.png);
+
+    return BitmapDescriptor.fromBytes(data!.buffer.asUint8List());
   }
 
   List<LatLng> _decodePolyline(String encoded) {
@@ -839,7 +845,7 @@ class _ModernRouteMapState extends State<ModernRouteMap>
                                       Icons.route,
                                       'Distância',
                                       _distance,
-                                      const Color(0xFF00D4FF),
+                                      const Color.fromARGB(255, 0, 68, 255),
                                     ),
                                   ),
                                   const SizedBox(width: 12),
@@ -848,7 +854,7 @@ class _ModernRouteMapState extends State<ModernRouteMap>
                                       Icons.access_time,
                                       'Tempo',
                                       _duration,
-                                      Colors.orange,
+                                      const Color.fromARGB(255, 255, 115, 0),
                                     ),
                                   ),
                                 ],
