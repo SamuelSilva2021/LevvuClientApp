@@ -4,7 +4,6 @@ import 'package:levvu_client/core/provider/user_provider.dart';
 import 'package:levvu_client/presentation/pages/freight_request_page.dart';
 import 'package:levvu_client/presentation/pages/historico_fretes_page.dart';
 import 'package:levvu_client/presentation/pages/perfil_usuario_page.dart';
-import 'package:levvu_client/presentation/pages/solicitacao_frete_page.dart';
 import 'package:levvu_client/presentation/pages/visualizacao_propostas_page.dart';
 import 'package:levvu_client/presentation/widgets/home/request_freight_card.dart';
 import 'package:levvu_client/presentation/widgets/home/ongoing_shipments_section.dart';

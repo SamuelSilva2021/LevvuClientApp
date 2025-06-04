@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:levvu_client/core/services/geocoding/geocoding_service.dart';
 import 'package:levvu_client/presentation/widgets/custom_text_field.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
+import 'dart:async';
 
 class AddressPicker extends StatefulWidget {
   final TextEditingController controller;
@@ -21,13 +25,98 @@ class AddressPicker extends StatefulWidget {
 
 class _AddressPickerState extends State<AddressPicker> {
   final _searchController = TextEditingController();
-  final List<String> _suggestions = [];
+  final List<Map<String, dynamic>> _suggestions = [];
   bool _isLoading = false;
 
   @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  Future<void> _getCurrentLocation() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // Verifica se o serviço de localização está ativado
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        throw Exception(
+            'O serviço de localização está desativado. Por favor, ative o GPS.');
+      }
+
+      // Verifica permissão de localização
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          throw Exception(
+              'Permissão de localização negada. Por favor, permita o acesso à localização nas configurações do aplicativo.');
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        throw Exception(
+            'Permissão de localização permanentemente negada. Por favor, permita o acesso à localização nas configurações do aplicativo.');
+      }
+
+      // Obtém a posição atual
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+        timeLimit: const Duration(seconds: 10),
+      );
+
+      // Converte as coordenadas em endereço
+      final placemarks = await placemarkFromCoordinates(
+        position.latitude,
+        position.longitude,
+      );
+
+      if (placemarks.isNotEmpty) {
+        final place = placemarks.first;
+        final address = [
+          if (place.street?.isNotEmpty ?? false) place.street,
+          if (place.subLocality?.isNotEmpty ?? false) place.subLocality,
+          if (place.locality?.isNotEmpty ?? false) place.locality,
+          if (place.administrativeArea?.isNotEmpty ?? false)
+            place.administrativeArea,
+          if (place.country?.isNotEmpty ?? false) place.country,
+        ].where((s) => s != null).join(', ');
+
+        if (address.isEmpty) {
+          throw Exception(
+              'Não foi possível obter o endereço atual. Por favor, tente novamente.');
+        }
+
+        widget.controller.text = address;
+        widget.onAddressSelected(address);
+        Navigator.pop(context);
+      } else {
+        throw Exception(
+            'Não foi possível obter o endereço atual. Por favor, tente novamente.');
+      }
+    } on TimeoutException {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+              'Tempo esgotado ao obter localização. Por favor, verifique se o GPS está ativado e tente novamente.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString().replaceAll('Exception: ', '')),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   Future<void> _searchAddress(String query) async {
@@ -43,15 +132,31 @@ class _AddressPickerState extends State<AddressPicker> {
     });
 
     try {
-      // TODO: Implementar busca de endereços usando API de geocodificação
-      await Future.delayed(const Duration(seconds: 1));
+      final suggestions = await GeocodingService.searchAddress(query);
       setState(() {
-        _suggestions.addAll([
-          'Rua Exemplo 1, 123 - Bairro 1, Cidade 1 - UF',
-          'Rua Exemplo 2, 456 - Bairro 2, Cidade 2 - UF',
-          'Rua Exemplo 3, 789 - Bairro 3, Cidade 3 - UF',
-        ]);
+        _suggestions.clear();
+        _suggestions.addAll(suggestions);
       });
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _selectAddress(Map<String, dynamic> suggestion) async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final details =
+          await GeocodingService.getPlaceDetails(suggestion['placeId']);
+      if (details != null) {
+        widget.controller.text = details['address'];
+        widget.onAddressSelected(details['address']);
+        Navigator.pop(context);
+      }
     } finally {
       setState(() {
         _isLoading = false;
@@ -63,11 +168,24 @@ class _AddressPickerState extends State<AddressPicker> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        CustomTextField(
-          controller: _searchController,
-          label: 'Buscar Endereço',
-          hint: 'Digite o endereço',
-          onChanged: _searchAddress,
+        Row(
+          children: [
+            Expanded(
+              child: CustomTextField(
+                controller: _searchController,
+                label: 'Buscar Endereço',
+                hint: 'Digite o endereço',
+                onChanged: _searchAddress,
+                prefixIcon: const Icon(Icons.search),
+              ),
+            ),
+            const SizedBox(width: 8),
+            IconButton(
+              onPressed: _isLoading ? null : _getCurrentLocation,
+              icon: const Icon(Icons.my_location),
+              tooltip: 'Usar minha localização',
+            ),
+          ],
         ),
         if (_isLoading)
           const Padding(
@@ -75,21 +193,33 @@ class _AddressPickerState extends State<AddressPicker> {
             child: CircularProgressIndicator(),
           ),
         if (_suggestions.isNotEmpty)
-          ListView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: _suggestions.length,
-            itemBuilder: (context, index) {
-              final suggestion = _suggestions[index];
-              return ListTile(
-                title: Text(suggestion),
-                onTap: () {
-                  widget.controller.text = suggestion;
-                  widget.onAddressSelected(suggestion);
-                  Navigator.pop(context);
-                },
-              );
-            },
+          Expanded(
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: _suggestions.length,
+              itemBuilder: (context, index) {
+                final suggestion = _suggestions[index];
+                final description = suggestion['description'] as String;
+                final parts = description.split(', ');
+
+                return Card(
+                  margin:
+                      const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                  child: ListTile(
+                    leading: const Icon(Icons.location_on, color: Colors.red),
+                    title: Text(
+                      parts.first,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: Text(
+                      parts.skip(1).join(', '),
+                      style: const TextStyle(fontSize: 12),
+                    ),
+                    onTap: () => _selectAddress(suggestion),
+                  ),
+                );
+              },
+            ),
           ),
       ],
     );

@@ -193,19 +193,47 @@ class _FreightRequestPageState extends State<FreightRequestPage> {
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
       builder: (context) => Padding(
         padding: EdgeInsets.only(
           bottom: MediaQuery.of(context).viewInsets.bottom,
         ),
         child: Container(
           padding: const EdgeInsets.all(16),
-          child: AddressPicker(
-            controller: controller,
-            label: 'Endereço',
-            hint: 'Digite o endereço',
-            onAddressSelected: (address) {
-              setState(() {});
-            },
+          height: MediaQuery.of(context).size.height * 0.7,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Selecione um endereço',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Expanded(
+                child: AddressPicker(
+                  controller: controller,
+                  label: 'Endereço',
+                  hint: 'Digite o endereço',
+                  onAddressSelected: (address) {
+                    setState(() {});
+                  },
+                ),
+              ),
+            ],
           ),
         ),
       ),

@@ -60,7 +60,9 @@ class EnvConfig {
     if (!_isInitialized) {
       return _defaultValues[key] ?? '';
     }
-    return dotenv.env[key] ?? _defaultValues[key] ?? '';
+    final value = dotenv.env[key] ?? _defaultValues[key] ?? '';
+    print('🔑 Obtendo valor para $key: $value');
+    return value;
   }
 
   static String get authApiUrl {
@@ -73,24 +75,51 @@ class EnvConfig {
     return '${_baseUrl}:$port';
   }
 
-  static String get environment => _getEnvValue('ENVIRONMENT');
+  static String get environment => dotenv.env['ENVIRONMENT'] ?? 'development';
   static bool get isDebug => _getEnvValue('DEBUG') == 'true';
+  static String get googleMapsApiKey => _getEnvValue('GOOGLE_MAPS_API_KEY');
 
   static Future<void> init() async {
     try {
-      if (kDebugMode) {
+      print('📂 Iniciando carregamento do arquivo .env...');
+
+      // Tenta carregar o arquivo .env.development
+      try {
         await dotenv.load(fileName: '.env.development');
-      } else {
-        await dotenv.load(fileName: '.env.production');
+        print('✅ Arquivo .env.development carregado com sucesso');
+      } catch (e) {
+        print('⚠️ Não foi possível carregar .env.development: $e');
+
+        // Se não conseguir carregar .env.development, tenta carregar .env
+        try {
+          await dotenv.load(fileName: '.env');
+          print('✅ Arquivo .env carregado com sucesso');
+        } catch (e) {
+          print('❌ Não foi possível carregar nenhum arquivo .env: $e');
+          rethrow;
+        }
       }
+
       _isInitialized = true;
-      print('Arquivo .env carregado com sucesso');
-      print('Auth API URL: $authApiUrl');
-      print('Main API URL: $mainApiUrl');
-      print('Is Emulator: $isEmulator');
-    } catch (e) {
-      print('Erro ao carregar arquivo .env: $e');
-      print('Usando valores padrão');
+
+      // Verifica se a API Key está presente
+      final apiKey = googleMapsApiKey;
+      if (apiKey.isEmpty) {
+        print('❌ ERRO: Google Maps API Key não encontrada!');
+        print(
+            '⚠️ Verifique se o arquivo .env contém a chave GOOGLE_MAPS_API_KEY');
+      } else {
+        print('✅ Google Maps API Key encontrada');
+      }
+
+      print('🔧 Configurações carregadas:');
+      print('🌐 Auth API URL: $authApiUrl');
+      print('🌐 Main API URL: $mainApiUrl');
+      print('🔧 Is Emulator: $isEmulator');
+    } catch (e, stackTrace) {
+      print('❌ Erro ao carregar configurações: $e');
+      print('📚 Stack trace: $stackTrace');
+      print('⚠️ Usando valores padrão');
       _isInitialized = false;
     }
   }
