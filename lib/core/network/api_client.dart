@@ -190,7 +190,7 @@ class ApiClient {
       debugPrint('❌ [ERROR] $e');
       return ApiResponse<T>(
         isSuccess: false,
-        message: 'Erro na requisição: $e',
+        message: 'Erro na requisição',
         data: null,
       );
     }

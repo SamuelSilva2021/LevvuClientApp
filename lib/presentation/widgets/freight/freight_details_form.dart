@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:levvu_client/core/models/freight_request_model.dart';
 import 'package:levvu_client/presentation/widgets/custom_text_field.dart';
 
@@ -62,32 +63,55 @@ class _FreightDetailsFormState extends State<FreightDetailsForm> {
           ),
         ),
         const SizedBox(height: 16),
-        DropdownButtonFormField<VehicleType>(
-          value: _selectedVehicleType,
-          decoration: const InputDecoration(
-            labelText: 'Tipo de Veículo',
-            border: OutlineInputBorder(),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              const SizedBox(width: 16),
+              _buildVehicleIcon(
+                VehicleType.moto,
+                'assets/icons/moto_icon.svg',
+                'Moto',
+              ),
+              _buildVehicleIcon(
+                VehicleType.car,
+                'assets/icons/car_icon.svg',
+                'Carro',
+              ),
+              const SizedBox(width: 16),
+              _buildVehicleIcon(
+                VehicleType.minivan,
+                'assets/icons/mini_van_icon.svg',
+                'Carro bau',
+              ),
+              const SizedBox(width: 16),
+              _buildVehicleIcon(
+                VehicleType.van,
+                'assets/icons/van_icon.svg',
+                'Van',
+              ),
+              const SizedBox(width: 16),
+              _buildVehicleIcon(
+                VehicleType.pickup,
+                'assets/icons/pickup_icon.svg',
+                'Pickup',
+              ),
+              const SizedBox(width: 16),
+              _buildVehicleIcon(
+                VehicleType.truck,
+                'assets/icons/truck_icon.svg',
+                'Caminhão',
+              ),
+              const SizedBox(width: 16),
+              _buildVehicleIcon(
+                VehicleType.longtruck,
+                'assets/icons/log_truck_icon.svg',
+                'Veículo longo',
+              ),
+              const SizedBox(width: 16),
+            ],
           ),
-          items: VehicleType.values.map((type) {
-            return DropdownMenuItem(
-              value: type,
-              child: Text(type.name),
-            );
-          }).toList(),
-          onChanged: (value) {
-            if (value != null) {
-              setState(() {
-                _selectedVehicleType = value;
-              });
-              widget.onVehicleTypeChanged?.call(value);
-            }
-          },
-          validator: (value) {
-            if (value == null) {
-              return 'Este campo é obrigatório';
-            }
-            return null;
-          },
         ),
         const SizedBox(height: 16),
         CustomTextField(
@@ -219,6 +243,61 @@ class _FreightDetailsFormState extends State<FreightDetailsForm> {
           },
         ),
       ],
+    );
+  }
+
+  Widget _buildVehicleIcon(VehicleType type, String iconPath, String label) {
+    final bool isSelected = _selectedVehicleType == type;
+    return InkWell(
+      onTap: () {
+        setState(() {
+          _selectedVehicleType = type;
+        });
+        widget.onVehicleTypeChanged?.call(type);
+      },
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: isSelected
+                    ? Theme.of(context).primaryColor
+                    : Colors.transparent,
+                width: 2,
+              ),
+            ),
+            child: Stack(
+              children: [
+                SvgPicture.asset(
+                  iconPath,
+                  width: 50,
+                  height: 50,
+                  placeholderBuilder: (context) => const Icon(
+                    Icons.directions_car,
+                    size: 50,
+                    color: Colors.grey,
+                  ),
+                ),
+                
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              color:
+                  isSelected ? Theme.of(context).primaryColor : Colors.black87,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

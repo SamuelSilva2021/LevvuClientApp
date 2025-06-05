@@ -1,10 +1,15 @@
 import 'package:levvu_client/core/models/cargo_item_model.dart';
 
 enum VehicleType {
+  moto,
+  car,
+  pickup,
   van,
   truck,
   refrigeratedTruck,
-  specialVehicle,
+  sedan,
+  longtruck,
+  minivan
 }
 
 class FreightRequestModel {
