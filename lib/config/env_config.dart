@@ -42,18 +42,20 @@ class EnvConfig {
     }
 
     if (Platform.isWindows) {
-      return true;
+      return false;
     }
 
     return false;
   }
 
   static String get _baseUrl {
-    final customBaseUrl = _getEnvValue('BASE_API_URL_FISICAL_DEVICE');
+    final String customBaseUrl = _getEnvValue('BASE_API_URL_FISICAL_DEVICE');
+    final String defaultBaseUrl = _getEnvValue('BASE_API_URL_DEFAULT');
+
     if (isEmulator) {
-      return 'http://10.0.2.2';
+      return _getEnvValue('BASE_API_URL_EMULATOR');
     }
-    return customBaseUrl.isNotEmpty ? customBaseUrl : 'http://192.168.0.100';
+    return customBaseUrl.isNotEmpty ? customBaseUrl : defaultBaseUrl;
   }
 
   static String _getEnvValue(String key) {
