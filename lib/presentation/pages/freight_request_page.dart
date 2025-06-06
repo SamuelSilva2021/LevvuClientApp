@@ -11,6 +11,7 @@ import 'package:levvu_client/presentation/widgets/freight/cargo_items_form.dart'
 import 'package:levvu_client/presentation/widgets/freight/freight_details_form.dart';
 import 'package:levvu_client/presentation/widgets/freight/modern_route_map.dart';
 import 'package:levvu_client/presentation/widgets/freight/photo_upload.dart';
+import 'package:levvu_client/presentation/widgets/freight/route_details_card.dart';
 import 'package:levvu_client/presentation/widgets/loading_button.dart';
 import 'package:levvu_client/presentation/widgets/success_message.dart';
 import 'package:provider/provider.dart';
@@ -40,10 +41,10 @@ class _FreightRequestPageState extends State<FreightRequestPage> {
   bool _disassemblyAssembly = false;
   bool _specialPackaging = false;
   DateTime? _selectedDate;
-  TimeOfDay? _selectedTime;
   final List<CargoItemModel> _cargoItems = [];
   final List<String> _photoUrls = [];
-  final List<String> _imageUrls = [];
+  String _routeDistance = '';
+  String _routeDuration = '';
 
   @override
   void dispose() {
@@ -58,47 +59,6 @@ class _FreightRequestPageState extends State<FreightRequestPage> {
     _itemDescriptionController.dispose();
     _observationsController.dispose();
     super.dispose();
-  }
-
-  Future<void> _selectDate(BuildContext context) async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: _selectedDate ?? DateTime.now(),
-      firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(const Duration(days: 365)),
-    );
-    if (picked != null && picked != _selectedDate) {
-      setState(() {
-        _selectedDate = picked;
-        _updatePickupTime();
-      });
-    }
-  }
-
-  Future<void> _selectTime(BuildContext context) async {
-    final TimeOfDay? picked = await showTimePicker(
-      context: context,
-      initialTime: _selectedTime ?? TimeOfDay.now(),
-    );
-    if (picked != null && picked != _selectedTime) {
-      setState(() {
-        _selectedTime = picked;
-        _updatePickupTime();
-      });
-    }
-  }
-
-  void _updatePickupTime() {
-    if (_selectedDate != null && _selectedTime != null) {
-      final dateTime = DateTime(
-        _selectedDate!.year,
-        _selectedDate!.month,
-        _selectedDate!.day,
-        _selectedTime!.hour,
-        _selectedTime!.minute,
-      );
-      _pickupTimeController.text = dateTime.toIso8601String();
-    }
   }
 
   void _addCargoItem(CargoItemModel item) {
@@ -311,9 +271,30 @@ class _FreightRequestPageState extends State<FreightRequestPage> {
                         child: ModernRouteMap(
                           originAddress: _pickupAddressController.text,
                           destinationAddress: _deliveryAddressController.text,
+                          onRouteCalculated: (distance, duration) {
+                            setState(() {
+                              _routeDistance = distance;
+                              _routeDuration = duration;
+                            });
+                          },
                         ),
                       ),
                     ),
+                  if (_routeDistance.isNotEmpty && _routeDuration.isNotEmpty) ...[
+                    const SizedBox(height: 16),
+                    RouteDetailsCard(
+                      distance: _routeDistance,
+                      duration: _routeDuration,
+                      originAddress: _pickupAddressController.text,
+                      destinationAddress: _deliveryAddressController.text,
+                      onClose: () {
+                        // Não faz nada, pois o card está sempre visível
+                      },
+                      onConfirm: () {
+                        // Não faz nada, pois o botão de confirmar está no final do formulário
+                      },
+                    ),
+                  ],
                   const SizedBox(height: 24),
                   FreightDetailsForm(
                     serviceTypeController: _serviceTypeController,

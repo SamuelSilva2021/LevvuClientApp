@@ -56,23 +56,6 @@ class ApiClient {
     _interceptors.add(interceptor);
   }
 
-  // Headers básicos
-  Map<String, String> _headers() {
-    return {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    };
-  }
-
-  // Headers com token de autenticação
-  Map<String, String> _authHeaders(String token) {
-    return {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      'Authorization': 'Bearer $token',
-    };
-  }
-
   // Métodos HTTP diretos
   Future<http.Response> get(Uri uri, {Map<String, String>? headers}) async {
     return await _client.get(uri, headers: headers);

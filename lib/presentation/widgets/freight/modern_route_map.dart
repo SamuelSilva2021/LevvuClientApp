@@ -10,11 +10,13 @@ import 'dart:ui' as ui;
 class ModernRouteMap extends StatefulWidget {
   final String originAddress;
   final String destinationAddress;
+  final Function(String distance, String duration)? onRouteCalculated;
 
   const ModernRouteMap({
     super.key,
     required this.originAddress,
     required this.destinationAddress,
+    this.onRouteCalculated,
   });
 
   @override
@@ -32,10 +34,8 @@ class _ModernRouteMapState extends State<ModernRouteMap>
   List<LatLng> _routePoints = [];
   String _distance = '';
   String _duration = '';
-  bool _showRouteDetails = true;
   bool _isMapReady = false;
   late AnimationController _slideController;
-  late Animation<Offset> _slideAnimation;
   Timer? _styleUpdateTimer;
 
   // Estilo de mapa moderno (escuro)
@@ -427,13 +427,6 @@ class _ModernRouteMapState extends State<ModernRouteMap>
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 1),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _slideController,
-      curve: Curves.easeInOut,
-    ));
     _initializeMap();
 
     // Inicia o timer para atualizar o estilo do mapa a cada minuto
@@ -502,6 +495,8 @@ class _ModernRouteMapState extends State<ModernRouteMap>
           final route = data['routes'][0]['legs'][0];
           _distance = route['distance']['text'];
           _duration = route['duration']['text'];
+
+          widget.onRouteCalculated?.call(_distance, _duration);
 
           _routePoints =
               _decodePolyline(data['routes'][0]['overview_polyline']['points']);
@@ -606,493 +601,177 @@ class _ModernRouteMapState extends State<ModernRouteMap>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: _isNightTime() ? Colors.black : Colors.white,
-      body: Stack(
-        children: [
-          // Mapa
-          if (!_isLoading && _error == null)
-            GoogleMap(
-              initialCameraPosition: CameraPosition(
-                target:
-                    _initialPosition ?? const LatLng(-23.550520, -46.633308),
-                zoom: 14,
-              ),
-              onMapCreated: (controller) {
-                _mapController = controller;
-                controller.setMapStyle(
-                    _getMapStyle()); // Aplica o estilo baseado no horário
-                if (_routePoints.isNotEmpty && !_isMapReady) {
-                  _isMapReady = true;
-                  Future.delayed(const Duration(milliseconds: 500), () {
-                    controller.animateCamera(
-                      CameraUpdate.newLatLngBounds(
-                        _getBounds(_routePoints),
-                        100.0,
-                      ),
-                    );
-                  });
-                }
-              },
-              markers: _markers,
-              polylines: _polylines,
-              myLocationEnabled: false, // Desabilitado para design mais limpo
-              myLocationButtonEnabled: false,
-              zoomControlsEnabled: false, // Controles customizados
-              mapToolbarEnabled: false,
-              mapType: MapType.normal,
-              compassEnabled: false,
-              zoomGesturesEnabled: true,
-              scrollGesturesEnabled: true,
-              tiltGesturesEnabled: true,
-              rotateGesturesEnabled: true,
-            ),
-
-          // Loading overlay
-          if (_isLoading)
-            Container(
-              color: Colors.black,
-              child: const Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    CircularProgressIndicator(
-                      valueColor:
-                          AlwaysStoppedAnimation<Color>(Color(0xFF00D4FF)),
-                    ),
-                    SizedBox(height: 16),
-                    Text(
-                      'Calculando rota...',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ],
+      body: SafeArea(
+        child: Stack(
+          children: [
+            // Mapa
+            if (!_isLoading && _error == null)
+              GoogleMap(
+                initialCameraPosition: CameraPosition(
+                  target: _initialPosition ?? const LatLng(-23.550520, -46.633308),
+                  zoom: 14,
                 ),
-              ),
-            ),
-
-          // Error overlay
-          if (_error != null)
-            Container(
-              color: Colors.black,
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(
-                      Icons.error_outline,
-                      color: Colors.red,
-                      size: 48,
-                    ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'Erro ao carregar o mapa',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      _error!,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: Colors.grey,
-                        fontSize: 14,
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    ElevatedButton(
-                      onPressed: _initializeMap,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF00D4FF),
-                        foregroundColor: Colors.black,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                onMapCreated: (controller) {
+                  _mapController = controller;
+                  controller.setMapStyle(_getMapStyle());
+                  if (_routePoints.isNotEmpty && !_isMapReady) {
+                    _isMapReady = true;
+                    Future.delayed(const Duration(milliseconds: 500), () {
+                      controller.animateCamera(
+                        CameraUpdate.newLatLngBounds(
+                          _getBounds(_routePoints),
+                          100.0,
                         ),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 32,
-                          vertical: 16,
+                      );
+                    });
+                  }
+                },
+                markers: _markers,
+                polylines: _polylines,
+                myLocationEnabled: false,
+                myLocationButtonEnabled: false,
+                zoomControlsEnabled: false,
+                mapToolbarEnabled: false,
+                mapType: MapType.normal,
+                compassEnabled: false,
+                zoomGesturesEnabled: true,
+                scrollGesturesEnabled: true,
+                tiltGesturesEnabled: true,
+                rotateGesturesEnabled: true,
+              ),
+
+            // Loading overlay
+            if (_isLoading)
+              Container(
+                color: Colors.black,
+                child: const Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF00D4FF)),
+                      ),
+                      SizedBox(height: 16),
+                      Text(
+                        'Calculando rota...',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
                         ),
-                      ),
-                      child: const Text(
-                        'Tentar novamente',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-          // Header com botão de voltar
-          Positioned(
-            top: MediaQuery.of(context).padding.top + 16,
-            left: 16,
-            child: Container(
-              decoration: BoxDecoration(
-                color: Theme.of(context).primaryColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: IconButton(
-                icon: Icon(Icons.arrow_back,
-                    color: Theme.of(context).primaryColor),
-                onPressed: () => Navigator.of(context).pop(),
-              ),
-            ),
-          ),
-
-          // Controles de zoom customizados
-          if (!_isLoading && _error == null)
-            Positioned(
-              top: MediaQuery.of(context).padding.top + 80,
-              right: 16,
-              child: Column(
-                children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.7),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: IconButton(
-                      icon: const Icon(Icons.add, color: Colors.white),
-                      onPressed: () {
-                        _mapController?.animateCamera(CameraUpdate.zoomIn());
-                      },
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.7),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: IconButton(
-                      icon: const Icon(Icons.remove, color: Colors.white),
-                      onPressed: () {
-                        _mapController?.animateCamera(CameraUpdate.zoomOut());
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-          // Card de detalhes da rota (estilo Uber)
-          if (_showRouteDetails && !_isLoading && _error == null)
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: SlideTransition(
-                position: _slideAnimation,
-                child: Container(
-                  constraints: BoxConstraints(
-                    maxHeight: MediaQuery.of(context).size.height * 0.6,
-                  ),
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(20),
-                      topRight: Radius.circular(20),
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black26,
-                        blurRadius: 10,
-                        offset: Offset(0, -5),
                       ),
                     ],
                   ),
-                  child: SingleChildScrollView(
-                    physics: const ClampingScrollPhysics(),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // Handle para arrastar
-                        Container(
-                          margin: const EdgeInsets.only(top: 12),
-                          width: 40,
-                          height: 4,
-                          decoration: BoxDecoration(
-                            color: Colors.grey[300],
-                            borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+
+            // Error overlay
+            if (_error != null)
+              Container(
+                color: Colors.black,
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(
+                        Icons.error_outline,
+                        color: Colors.red,
+                        size: 48,
+                      ),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Erro ao carregar o mapa',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        _error!,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Colors.grey,
+                          fontSize: 14,
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      ElevatedButton(
+                        onPressed: _initializeMap,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF00D4FF),
+                          foregroundColor: Colors.black,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 32,
+                            vertical: 16,
                           ),
                         ),
-
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Título
-                              const Text(
-                                'Detalhes da viagem',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black,
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-
-                              // Informações da rota
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: _buildInfoCard(
-                                      Icons.route,
-                                      'Distância',
-                                      _distance,
-                                      const Color.fromARGB(255, 0, 68, 255),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: _buildInfoCard(
-                                      Icons.access_time,
-                                      'Tempo',
-                                      _duration,
-                                      const Color.fromARGB(255, 255, 115, 0),
-                                    ),
-                                  ),
-                                ],
-                              ),
-
-                              const SizedBox(height: 12),
-
-                              // Endereços
-                              _buildAddressInfo(),
-
-                              const SizedBox(height: 12),
-
-                              // Botões de ação
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: OutlinedButton(
-                                      onPressed: () {
-                                        setState(() {
-                                          _showRouteDetails = false;
-                                        });
-                                      },
-                                      style: OutlinedButton.styleFrom(
-                                        foregroundColor:
-                                            Theme.of(context).primaryColor,
-                                        side: BorderSide(
-                                            color:
-                                                Theme.of(context).primaryColor),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(8),
-                                        ),
-                                        padding: const EdgeInsets.symmetric(
-                                            vertical: 8),
-                                      ),
-                                      child: const Text(
-                                        'Fechar',
-                                        style: TextStyle(fontSize: 14),
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: ElevatedButton(
-                                      onPressed: () {
-                                        // Ação para confirmar viagem
-                                        ScaffoldMessenger.of(context)
-                                            .showSnackBar(
-                                          const SnackBar(
-                                            content: Text('Viagem confirmada!'),
-                                            backgroundColor: Color(0xFF00D4FF),
-                                          ),
-                                        );
-                                      },
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor:
-                                            Theme.of(context).primaryColor,
-                                        foregroundColor: Colors.white,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(8),
-                                        ),
-                                        padding: const EdgeInsets.symmetric(
-                                            vertical: 8),
-                                        elevation: 0,
-                                      ),
-                                      child: const Text(
-                                        'Confirmar',
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
+                        child: const Text(
+                          'Tentar novamente',
+                          style: TextStyle(fontWeight: FontWeight.bold),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
               ),
-            ),
 
-          // FAB para mostrar detalhes quando oculto
-          if (!_showRouteDetails && !_isLoading && _error == null)
+            // Header com botão de voltar
             Positioned(
-              bottom: 32,
-              right: 16,
-              child: FloatingActionButton.extended(
-                onPressed: () {
-                  setState(() {
-                    _showRouteDetails = true;
-                  });
-                  _slideController.forward();
-                },
-                backgroundColor: Theme.of(context).primaryColor,
-                foregroundColor: Colors.white,
-                icon: const Icon(Icons.info_outline),
-                label: const Text(
-                  'Detalhes',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                  ),
+              top: 16,
+              left: 16,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Theme.of(context).primaryColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: IconButton(
+                  icon: Icon(Icons.arrow_back, color: Theme.of(context).primaryColor),
+                  onPressed: () => Navigator.of(context).pop(),
                 ),
               ),
             ),
-        ],
-      ),
-    );
-  }
 
-  Widget _buildInfoCard(
-      IconData icon, String label, String value, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.3)),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, color: color, size: 20),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
-            textAlign: TextAlign.center,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 11,
-              color: Colors.grey,
-            ),
-            textAlign: TextAlign.center,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAddressInfo() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.grey[50],
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 12,
-                height: 12,
-                decoration: const BoxDecoration(
-                  color: Colors.green,
-                  shape: BoxShape.circle,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
+            // Controles de zoom customizados
+            if (!_isLoading && _error == null)
+              Positioned(
+                top: 80,
+                right: 16,
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Origem',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey,
-                        fontWeight: FontWeight.w500,
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.7),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: IconButton(
+                        icon: const Icon(Icons.add, color: Colors.white),
+                        onPressed: () {
+                          _mapController?.animateCamera(CameraUpdate.zoomIn());
+                        },
                       ),
                     ),
-                    Text(
-                      widget.originAddress,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Colors.black,
+                    const SizedBox(height: 8),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.7),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: IconButton(
+                        icon: const Icon(Icons.remove, color: Colors.white),
+                        onPressed: () {
+                          _mapController?.animateCamera(CameraUpdate.zoomOut());
+                        },
                       ),
                     ),
                   ],
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Container(
-                width: 12,
-                height: 12,
-                decoration: const BoxDecoration(
-                  color: Colors.red,
-                  shape: BoxShape.circle,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Destino',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    Text(
-                      widget.destinationAddress,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Colors.black,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
