@@ -34,8 +34,10 @@ class _ModernRouteMapState extends State<ModernRouteMap>
   List<LatLng> _routePoints = [];
   String _distance = '';
   String _duration = '';
+  bool _showRouteDetails = true;
   bool _isMapReady = false;
   late AnimationController _slideController;
+  late Animation<Offset> _slideAnimation;
   Timer? _styleUpdateTimer;
 
   // Estilo de mapa moderno (escuro)
@@ -427,16 +429,46 @@ class _ModernRouteMapState extends State<ModernRouteMap>
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 1),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _slideController,
+      curve: Curves.easeInOut,
+    ));
     _initializeMap();
 
     // Inicia o timer para atualizar o estilo do mapa a cada minuto
     _styleUpdateTimer = Timer.periodic(const Duration(minutes: 1), (timer) {
       if (_mapController != null) {
         _mapController!.setMapStyle(_getMapStyle());
-        setState(
-            () {}); // Atualiza o estado para refletir a mudança de cor de fundo
+        setState(() {});
       }
     });
+  }
+
+  @override
+  void didUpdateWidget(ModernRouteMap oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.originAddress != widget.originAddress ||
+        oldWidget.destinationAddress != widget.destinationAddress) {
+      _isMapReady = false;
+      _initializeMap().then((_) {
+        if (_mapController != null && _routePoints.isNotEmpty) {
+          Future.delayed(const Duration(milliseconds: 500), () {
+            if (mounted && _mapController != null) {
+              _mapController!.animateCamera(
+                CameraUpdate.newLatLngBounds(
+                  _getBounds(_routePoints),
+                  100.0,
+                ),
+              );
+              _isMapReady = true;
+            }
+          });
+        }
+      });
+    }
   }
 
   @override
