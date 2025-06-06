@@ -15,6 +15,7 @@ import 'package:levvu_client/presentation/widgets/freight/route_details_card.dar
 import 'package:levvu_client/presentation/widgets/loading_button.dart';
 import 'package:levvu_client/presentation/widgets/success_message.dart';
 import 'package:provider/provider.dart';
+import 'package:levvu_client/presentation/pages/freight_service_details_page.dart';
 
 class FreightRequestPage extends StatefulWidget {
   const FreightRequestPage({super.key});
@@ -201,156 +202,86 @@ class _FreightRequestPageState extends State<FreightRequestPage> {
     );
   }
 
-  Future<void> _showConfirmationDialog() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => ConfirmationDialog(
-        title: 'Confirmar Solicitação',
-        message: 'Deseja realmente criar esta solicitação de frete?',
-        confirmText: 'Sim',
-        cancelText: 'Não',
-        onConfirm: () {
-          Navigator.pop(context, true);
-        },
+  void _navigateToServiceDetails() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => FreightServiceDetailsPage(
+          pickupAddress: _pickupAddressController.text,
+          deliveryAddress: _deliveryAddressController.text,
+          routeDistance: _routeDistance,
+          routeDuration: _routeDuration,
+        ),
       ),
     );
-
-    if (confirmed == true) {
-      await _submitForm();
-    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Nova Solicitação de Frete'),
+        title: const Text('Solicitar Frete'),
       ),
-      body: Consumer<FreightRequestController>(
-        builder: (context, controller, child) {
-          return Form(
-            key: _formKey,
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (controller.error != null)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
-                      child: ErrorMessage(
-                        message: controller.error!,
-                        onDismiss: controller.clearError,
-                      ),
-                    ),
-                  if (controller.successMessage != null)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
-                      child: SuccessMessage(
-                        message: controller.successMessage!,
-                        onDismiss: controller.clearSuccessMessage,
-                      ),
-                    ),
-                  AddressForm(
-                    pickupAddressController: _pickupAddressController,
-                    deliveryAddressController: _deliveryAddressController,
-                    onPickupAddressTap: () {
-                      _showAddressPicker(context, _pickupAddressController);
-                    },
-                    onDeliveryAddressTap: () {
-                      _showAddressPicker(context, _deliveryAddressController);
-                    },
-                    validator: _validateRequired,
-                  ),
-                  if (_pickupAddressController.text.isNotEmpty &&
-                      _deliveryAddressController.text.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      child: SizedBox(
-                        height: 300,
-                        child: ModernRouteMap(
-                          originAddress: _pickupAddressController.text,
-                          destinationAddress: _deliveryAddressController.text,
-                          onRouteCalculated: (distance, duration) {
-                            setState(() {
-                              _routeDistance = distance;
-                              _routeDuration = duration;
-                            });
-                          },
-                        ),
-                      ),
-                    ),
-                  if (_routeDistance.isNotEmpty && _routeDuration.isNotEmpty) ...[
-                    const SizedBox(height: 16),
-                    RouteDetailsCard(
-                      distance: _routeDistance,
-                      duration: _routeDuration,
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Endereços',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 16),
+              AddressForm(
+                pickupAddressController: _pickupAddressController,
+                deliveryAddressController: _deliveryAddressController,
+                onPickupAddressTap: () => _showAddressPicker(
+                  context,
+                  _pickupAddressController,
+                ),
+                onDeliveryAddressTap: () => _showAddressPicker(
+                  context,
+                  _deliveryAddressController,
+                ),
+              ),
+              if (_pickupAddressController.text.isNotEmpty &&
+                  _deliveryAddressController.text.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  child: SizedBox(
+                    height: 300,
+                    child: ModernRouteMap(
                       originAddress: _pickupAddressController.text,
                       destinationAddress: _deliveryAddressController.text,
-                      onClose: () {
-                        // Não faz nada, pois o card está sempre visível
-                      },
-                      onConfirm: () {
-                        // Não faz nada, pois o botão de confirmar está no final do formulário
+                      onRouteCalculated: (distance, duration) {
+                        setState(() {
+                          _routeDistance = distance;
+                          _routeDuration = duration;
+                        });
                       },
                     ),
-                  ],
-                  const SizedBox(height: 24),
-                  FreightDetailsForm(
-                    serviceTypeController: _serviceTypeController,
-                    descriptionController: _descriptionController,
-                    cargoTypeController: _cargoTypeController,
-                    weightController: _weightController,
-                    volumeController: _volumeController,
-                    pickupTimeController: _pickupTimeController,
-                    itemDescriptionController: _itemDescriptionController,
-                    observationsController: _observationsController,
-                    onVehicleTypeChanged: (value) {
-                      setState(() {
-                        _selectedVehicleType = value;
-                      });
-                    },
-                    onHelpLoadingChanged: (value) {
-                      setState(() {
-                        _helpLoading = value;
-                      });
-                    },
-                    onDisassemblyAssemblyChanged: (value) {
-                      setState(() {
-                        _disassemblyAssembly = value;
-                      });
-                    },
-                    onSpecialPackagingChanged: (value) {
-                      setState(() {
-                        _specialPackaging = value;
-                      });
-                    },
-                    validator: _validateRequired,
-                    numberValidator: _validateNumber,
                   ),
-                  const SizedBox(height: 24),
-                  PhotoUpload(
-                    photoUrls: _photoUrls,
-                    onPhotoAdded: _addPhoto,
-                    onPhotoRemoved: _removePhoto,
-                  ),
-                  const SizedBox(height: 24),
-                  CargoItemsForm(
-                    items: _cargoItems,
-                    onAddItem: _addCargoItem,
-                    onRemoveItem: _removeCargoItem,
-                  ),
-                  const SizedBox(height: 24),
-                  LoadingButton(
-                    text: 'Criar Solicitação',
-                    onPressed: _showConfirmationDialog,
-                    isLoading: controller.isLoading,
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
+                ),
+              if (_routeDistance.isNotEmpty && _routeDuration.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                RouteDetailsCard(
+                  distance: _routeDistance,
+                  duration: _routeDuration,
+                  originAddress: _pickupAddressController.text,
+                  destinationAddress: _deliveryAddressController.text,
+                  onClose: () {
+                    // Não faz nada, pois o card está sempre visível
+                  },
+                  onConfirm: _navigateToServiceDetails,
+                ),
+              ],
+            ],
+          ),
+        ),
       ),
     );
   }

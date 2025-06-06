@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:levvu_client/core/models/freight_request_model.dart';
+import 'package:levvu_client/core/models/service_types.dart';
 import 'package:levvu_client/presentation/widgets/custom_text_field.dart';
 
 class FreightDetailsForm extends StatefulWidget {
-  final TextEditingController serviceTypeController;
   final TextEditingController descriptionController;
   final TextEditingController cargoTypeController;
   final TextEditingController weightController;
@@ -19,10 +19,10 @@ class FreightDetailsForm extends StatefulWidget {
   final Function(bool)? onHelpLoadingChanged;
   final Function(bool)? onDisassemblyAssemblyChanged;
   final Function(bool)? onSpecialPackagingChanged;
+  final EServiceTypes selectedServiceType;
 
   const FreightDetailsForm({
     super.key,
-    required this.serviceTypeController,
     required this.descriptionController,
     required this.cargoTypeController,
     required this.weightController,
@@ -30,6 +30,7 @@ class FreightDetailsForm extends StatefulWidget {
     required this.pickupTimeController,
     required this.itemDescriptionController,
     required this.observationsController,
+    required this.selectedServiceType,
     this.validator,
     this.numberValidator,
     this.onVehicleTypeChanged,
@@ -44,7 +45,7 @@ class FreightDetailsForm extends StatefulWidget {
 }
 
 class _FreightDetailsFormState extends State<FreightDetailsForm> {
-  VehicleType _selectedVehicleType = VehicleType.van;
+  VehicleType _selectedVehicleType = VehicleType.moto;
   DateTime _selectedDate = DateTime.now();
   bool _helpLoading = false;
   bool _disassemblyAssembly = false;
@@ -69,56 +70,46 @@ class _FreightDetailsFormState extends State<FreightDetailsForm> {
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
               const SizedBox(width: 16),
-              _buildVehicleIcon(
-                VehicleType.moto,
-                'assets/icons/moto_icon.svg',
-                'Moto',
-              ),
-              _buildVehicleIcon(
-                VehicleType.car,
-                'assets/icons/car_icon.svg',
-                'Carro',
-              ),
-              const SizedBox(width: 16),
-              _buildVehicleIcon(
-                VehicleType.minivan,
-                'assets/icons/mini_van_icon.svg',
-                'Carro bau',
-              ),
-              const SizedBox(width: 16),
-              _buildVehicleIcon(
-                VehicleType.van,
-                'assets/icons/van_icon.svg',
-                'Van',
-              ),
-              const SizedBox(width: 16),
-              _buildVehicleIcon(
-                VehicleType.pickup,
-                'assets/icons/pickup_icon.svg',
-                'Pickup',
-              ),
-              const SizedBox(width: 16),
-              _buildVehicleIcon(
-                VehicleType.truck,
-                'assets/icons/truck_icon.svg',
-                'Caminhão',
-              ),
-              const SizedBox(width: 16),
-              _buildVehicleIcon(
-                VehicleType.longtruck,
-                'assets/icons/log_truck_icon.svg',
-                'Veículo longo',
-              ),
+              if (widget.selectedServiceType == EServiceTypes.residentialMoving) ...[
+                _buildVehicleIcon(
+                  VehicleType.truck,
+                  'assets/icons/truck_icon.svg',
+                  'Caminhão',
+                ),
+                const SizedBox(width: 16),
+                _buildVehicleIcon(
+                  VehicleType.pickup,
+                  'assets/icons/pickup_icon.svg',
+                  'Pickup',
+                ),
+              ] else ...[
+                _buildVehicleIcon(
+                  VehicleType.moto,
+                  'assets/icons/moto_icon.svg',
+                  'Moto',
+                ),
+                const SizedBox(width: 16),
+                _buildVehicleIcon(
+                  VehicleType.car,
+                  'assets/icons/car_icon.svg',
+                  'Carro',
+                ),
+                const SizedBox(width: 16),
+                _buildVehicleIcon(
+                  VehicleType.minivan,
+                  'assets/icons/mini_van_icon.svg',
+                  'Carro bau',
+                ),
+                const SizedBox(width: 16),
+                _buildVehicleIcon(
+                  VehicleType.van,
+                  'assets/icons/van_icon.svg',
+                  'Van',
+                ),
+              ],
               const SizedBox(width: 16),
             ],
           ),
-        ),
-        const SizedBox(height: 16),
-        CustomTextField(
-          controller: widget.serviceTypeController,
-          label: 'Tipo de Serviço',
-          hint: 'Digite o tipo de serviço',
-          validator: widget.validator,
         ),
         const SizedBox(height: 16),
         CustomTextField(
