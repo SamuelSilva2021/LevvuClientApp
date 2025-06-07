@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:levvu_client/core/constants/app_colors.dart';
 import 'package:levvu_client/core/provider/user_provider.dart';
-import 'package:levvu_client/presentation/pages/freight_request_page.dart';
 import 'package:levvu_client/presentation/pages/historico_fretes_page.dart';
 import 'package:levvu_client/presentation/pages/perfil_usuario_page.dart';
 import 'package:levvu_client/presentation/pages/visualizacao_propostas_page.dart';
+import 'package:levvu_client/presentation/pages/improved_freight_request_page.dart';
 import 'package:levvu_client/presentation/widgets/home/request_freight_card.dart';
 import 'package:levvu_client/presentation/widgets/home/ongoing_shipments_section.dart';
 import 'package:levvu_client/presentation/widgets/home/recent_proposals_section.dart';
@@ -167,7 +167,7 @@ class HomeContent extends StatelessWidget {
               onTap: () {
                 Navigator.of(context).push(
                   MaterialPageRoute(
-                    builder: (context) => const FreightRequestPage(),
+                    builder: (context) => const ImprovedFreightRequestPage(),
                   ),
                 );
               },
