@@ -96,7 +96,9 @@ class _DynamicFreightDetailsFormState extends State<DynamicFreightDetailsForm> {
 
   Widget _buildCommonFields() {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Descrição geral
         TextFormField(
           controller: widget.descriptionController,
           decoration: const InputDecoration(
@@ -109,32 +111,47 @@ class _DynamicFreightDetailsFormState extends State<DynamicFreightDetailsForm> {
         ),
         const SizedBox(height: 16),
         
-        Row(
-          children: [
-            Expanded(
-              child: TextFormField(
-                controller: widget.weightController,
-                decoration: const InputDecoration(
-                  labelText: 'Peso Estimado (kg)',
-                  border: OutlineInputBorder(),
+        // Peso e volume (não mostrar para móveis)
+        if (widget.selectedServiceType.category != ServiceCategory.furniture) ...[
+          Row(
+            children: [
+              Expanded(
+                child: TextFormField(
+                  controller: widget.weightController,
+                  decoration: const InputDecoration(
+                    labelText: 'Peso Estimado (kg)',
+                    border: OutlineInputBorder(),
+                  ),
+                  keyboardType: TextInputType.number,
+                  validator: widget.numberValidator,
                 ),
-                keyboardType: TextInputType.number,
-                validator: widget.numberValidator,
               ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: TextFormField(
-                controller: widget.volumeController,
-                decoration: const InputDecoration(
-                  labelText: 'Volume (m³)',
-                  border: OutlineInputBorder(),
+              const SizedBox(width: 16),
+              Expanded(
+                child: TextFormField(
+                  controller: widget.volumeController,
+                  decoration: const InputDecoration(
+                    labelText: 'Volume (m³)',
+                    border: OutlineInputBorder(),
+                  ),
+                  keyboardType: TextInputType.number,
+                  validator: widget.numberValidator,
                 ),
-                keyboardType: TextInputType.number,
-                validator: widget.numberValidator,
               ),
-            ),
-          ],
+            ],
+          ),
+          const SizedBox(height: 16),
+        ],
+        
+        // Horário de retirada
+        TextFormField(
+          controller: widget.pickupTimeController,
+          decoration: const InputDecoration(
+            labelText: 'Horário de Retirada',
+            hintText: 'Ex: Entre 14h e 16h',
+            border: OutlineInputBorder(),
+          ),
+          validator: widget.validator,
         ),
       ],
     );
@@ -235,26 +252,75 @@ class _DynamicFreightDetailsFormState extends State<DynamicFreightDetailsForm> {
         ),
         const SizedBox(height: 16),
         
+        // Dimensões do móvel
+        Row(
+          children: [
+            Expanded(
+              child: TextFormField(
+                controller: _dimensionsController,
+                decoration: const InputDecoration(
+                  labelText: 'Comprimento (cm)',
+                  border: OutlineInputBorder(),
+                ),
+                keyboardType: TextInputType.number,
+                validator: widget.numberValidator,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: TextFormField(
+                controller: _dimensionsController,
+                decoration: const InputDecoration(
+                  labelText: 'Largura (cm)',
+                  border: OutlineInputBorder(),
+                ),
+                keyboardType: TextInputType.number,
+                validator: widget.numberValidator,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: TextFormField(
+                controller: _dimensionsController,
+                decoration: const InputDecoration(
+                  labelText: 'Altura (cm)',
+                  border: OutlineInputBorder(),
+                ),
+                keyboardType: TextInputType.number,
+                validator: widget.numberValidator,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        
+        // Descrição detalhada
         TextFormField(
-          controller: _dimensionsController,
+          controller: widget.itemDescriptionController,
           decoration: const InputDecoration(
-            labelText: 'Dimensões Aproximadas',
-            hintText: 'Ex: 2m x 1m x 0,8m',
+            labelText: 'Descrição Detalhada',
+            hintText: 'Ex: Sofá 3 lugares, cor bege, com reclinável',
             border: OutlineInputBorder(),
           ),
+          maxLines: 3,
           validator: widget.validator,
         ),
         const SizedBox(height: 16),
         
+        // Ajuda para carregar/descarregar
         SwitchListTile(
-          title: const Text('Necessita desmontagem/montagem?'),
-          value: _needsDisassembly,
-          onChanged: (value) {
-            setState(() {
-              _needsDisassembly = value;
-            });
-            widget.onDisassemblyAssemblyChanged(value);
-          },
+          title: const Text('Ajuda para carregar/descarregar'),
+          subtitle: const Text('Serviço de ajudantes para o transporte'),
+          value: false,
+          onChanged: widget.onHelpLoadingChanged,
+        ),
+        
+        // Desmontagem/Montagem
+        SwitchListTile(
+          title: const Text('Desmontagem/Montagem'),
+          subtitle: const Text('Necessário desmontar para transportar'),
+          value: false,
+          onChanged: widget.onDisassemblyAssemblyChanged,
         ),
       ],
     );
@@ -407,14 +473,7 @@ class _DynamicFreightDetailsFormState extends State<DynamicFreightDetailsForm> {
           ),
         ),
         const SizedBox(height: 16),
-        
-        SwitchListTile(
-          title: const Text('Ajuda para carregar/descarregar'),
-          subtitle: const Text('Serviço de ajudantes para o transporte'),
-          value: false,
-          onChanged: widget.onHelpLoadingChanged,
-        ),
-        
+        if(widget.selectedServiceType.category == ServiceCategory.moving)
         SwitchListTile(
           title: const Text('Embalagem especial'),
           subtitle: const Text('Proteção extra para itens frágeis'),

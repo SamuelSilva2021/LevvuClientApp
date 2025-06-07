@@ -5,6 +5,11 @@ import 'package:levvu_client/presentation/widgets/freight/address_picker.dart';
 import 'package:levvu_client/presentation/pages/improved_freight_service_details_page.dart';
 import 'package:levvu_client/presentation/widgets/freight/modern_route_map.dart';
 import 'package:levvu_client/presentation/widgets/freight/route_details_card.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:google_places_flutter/google_places_flutter.dart';
+import 'package:google_places_flutter/model/prediction.dart';
 
 class ImprovedFreightRequestPage extends StatefulWidget {
   const ImprovedFreightRequestPage({super.key});
@@ -21,6 +26,16 @@ class _ImprovedFreightRequestPageState extends State<ImprovedFreightRequestPage>
   String _routeDistance = '';
   String _routeDuration = '';
   int _currentStep = 0;
+  String _pickupAddress = '';
+  String _deliveryAddress = '';
+  final _placesApiKey = "AIzaSyAwV5JLtIB-MzLA7wKUS1WHijzLIsEhhnM";
+
+  @override
+  void initState() {
+    super.initState();
+    _pickupAddressController.text = _pickupAddress;
+    _deliveryAddressController.text = _deliveryAddress;
+  }
 
   @override
   void dispose() {
@@ -47,104 +62,6 @@ class _ImprovedFreightRequestPageState extends State<ImprovedFreightRequestPage>
     return null;
   }
 
-  Future<void> _showAddressPicker(
-      BuildContext context, TextEditingController controller) async {
-    await showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (context) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-        ),
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          height: MediaQuery.of(context).size.height * 0.7,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Selecione um endereço',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Expanded(
-                child: AddressPicker(
-                  controller: controller,
-                  label: 'Endereço',
-                  hint: 'Digite o endereço',
-                  onAddressSelected: (address) {
-                    setState(() {});
-                  },
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _navigateToServiceDetails() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => ImprovedFreightServiceDetailsPage(
-          pickupAddress: _pickupAddressController.text,
-          deliveryAddress: _deliveryAddressController.text,
-          routeDistance: _routeDistance,
-          routeDuration: _routeDuration,
-        ),
-      ),
-    );
-  }
-
-  bool _canProceedToNextStep() {
-    switch (_currentStep) {
-      case 0:
-        return _pickupAddressController.text.isNotEmpty && 
-               _deliveryAddressController.text.isNotEmpty;
-      case 1:
-        return _routeDistance.isNotEmpty && _routeDuration.isNotEmpty;
-      default:
-        return false;
-    }
-  }
-
-  void _nextStep() {
-    if (_canProceedToNextStep()) {
-      if (_currentStep == 1) {
-        _navigateToServiceDetails();
-      } else {
-        setState(() {
-          _currentStep++;
-        });
-      }
-    }
-  }
-
-  void _previousStep() {
-    if (_currentStep > 0) {
-      setState(() {
-        _currentStep--;
-      });
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -169,28 +86,14 @@ class _ImprovedFreightRequestPageState extends State<ImprovedFreightRequestPage>
                       : Colors.grey.shade300,
                   ),
                 ),
-                _buildStepIndicator(1, 'Rota', Icons.route),
-                Expanded(
-                  child: Container(
-                    height: 2,
-                    color: _currentStep > 1 
-                      ? Theme.of(context).primaryColor 
-                      : Colors.grey.shade300,
-                  ),
-                ),
-                _buildStepIndicator(2, 'Serviço', Icons.local_shipping),
+                _buildStepIndicator(1, 'Serviço', Icons.local_shipping),
               ],
             ),
           ),
           
           // Conteúdo principal
           Expanded(
-            child: SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: _buildStepContent(),
-              ),
-            ),
+            child: _buildStepContent(),
           ),
           
           // Botões de navegação
@@ -220,7 +123,7 @@ class _ImprovedFreightRequestPageState extends State<ImprovedFreightRequestPage>
                 Expanded(
                   child: ElevatedButton(
                     onPressed: _canProceedToNextStep() ? _nextStep : null,
-                    child: Text(_currentStep == 1 ? 'Continuar' : 'Próximo'),
+                    child: Text(_currentStep == 0 ? 'Próximo' : 'Continuar'),
                   ),
                 ),
               ],
@@ -270,113 +173,38 @@ class _ImprovedFreightRequestPageState extends State<ImprovedFreightRequestPage>
   Widget _buildStepContent() {
     switch (_currentStep) {
       case 0:
-        return _buildAddressStep();
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: _buildAddressStep(),
+        );
       case 1:
-        return _buildRouteStep();
+        return ImprovedFreightServiceDetailsPage(
+          pickupAddress: _pickupAddressController.text,
+          deliveryAddress: _deliveryAddressController.text,
+          routeDistance: _routeDistance,
+          routeDuration: _routeDuration,
+        );
       default:
-        return Container();
+        return const SizedBox.shrink();
     }
   }
 
   Widget _buildAddressStep() {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Text(
-          'Endereços de Coleta e Entrega',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'Informe os endereços de origem e destino para calcular a rota.',
-          style: TextStyle(
-            fontSize: 16,
-            color: Colors.grey.shade600,
-          ),
-        ),
-        const SizedBox(height: 24),
-        
-        AddressForm(
-          pickupAddressController: _pickupAddressController,
-          deliveryAddressController: _deliveryAddressController,
-          onPickupAddressTap: () => _showAddressPicker(
-            context,
-            _pickupAddressController,
-          ),
-          onDeliveryAddressTap: () => _showAddressPicker(
-            context,
-            _deliveryAddressController,
-          ),
-        ),
-        
-        if (_pickupAddressController.text.isNotEmpty && 
-            _deliveryAddressController.text.isNotEmpty)
-          Container(
-            margin: const EdgeInsets.only(top: 24),
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.green.shade50,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.green.shade200),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.check_circle,
-                  color: Colors.green.shade600,
-                ),
-                const SizedBox(width: 12),
-                const Expanded(
-                  child: Text(
-                    'Endereços definidos! Clique em "Próximo" para visualizar a rota.',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-      ],
-    );
-  }
-
-  Widget _buildRouteStep() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Rota Calculada',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'Verifique a rota calculada e confirme para prosseguir.',
-          style: TextStyle(
-            fontSize: 16,
-            color: Colors.grey.shade600,
-          ),
-        ),
-        const SizedBox(height: 24),
-        
-        // Mapa da rota
+        // Mapa
         Container(
           height: 300,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
             border: Border.all(color: Colors.grey.shade300),
+            borderRadius: BorderRadius.circular(12),
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(12),
             child: ModernRouteMap(
-              originAddress: _pickupAddressController.text,
-              destinationAddress: _deliveryAddressController.text,
+              originAddress: _pickupAddress,
+              destinationAddress: _deliveryAddress,
               onRouteCalculated: (distance, duration) {
                 setState(() {
                   _routeDistance = distance;
@@ -386,24 +214,244 @@ class _ImprovedFreightRequestPageState extends State<ImprovedFreightRequestPage>
             ),
           ),
         ),
-        
-        if (_routeDistance.isNotEmpty && _routeDuration.isNotEmpty) ...[
-          const SizedBox(height: 24),
-          RouteDetailsCard(
-            distance: _routeDistance,
-            duration: _routeDuration,
-            originAddress: _pickupAddressController.text,
-            destinationAddress: _deliveryAddressController.text,
-            onClose: () {
-              // Não faz nada, pois o card está sempre visível
-            },
-            onConfirm: () {
-              // Não faz nada, usa o botão de navegação
-            },
+        const SizedBox(height: 16),
+
+        // Formulário de endereços
+        Card(
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(color: Colors.grey.shade200),
           ),
-        ],
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Endereço de coleta
+                Row(
+                  children: [
+                    Expanded(
+                      child: GooglePlaceAutoCompleteTextField(
+                        googleAPIKey: _placesApiKey,
+                        textEditingController: _pickupAddressController,
+                        inputDecoration: InputDecoration(
+                          labelText: 'Endereço de coleta',
+                          hintText: 'Digite o endereço de coleta',
+                          prefixIcon: const Icon(Icons.location_on_outlined),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        debounceTime: 800,
+                        countries: const ["br"],
+                        isLatLngRequired: true,
+                        getPlaceDetailWithLatLng: (Prediction prediction) {
+                          setState(() {
+                            _pickupAddress = prediction.description ?? '';
+                          });
+                        },
+                        itemClick: (Prediction prediction) {
+                          setState(() {
+                            _pickupAddress = prediction.description ?? '';
+                          });
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton(
+                      onPressed: () async {
+                        try {
+                          final position = await Geolocator.getCurrentPosition();
+                          final placemarks = await placemarkFromCoordinates(
+                            position.latitude,
+                            position.longitude,
+                          );
+                          if (placemarks.isNotEmpty) {
+                            final place = placemarks.first;
+                            final address = [
+                              if (place.street?.isNotEmpty ?? false) place.street,
+                              if (place.subLocality?.isNotEmpty ?? false) place.subLocality,
+                              if (place.locality?.isNotEmpty ?? false) place.locality,
+                              if (place.administrativeArea?.isNotEmpty ?? false) place.administrativeArea,
+                            ].where((e) => e != null).join(', ');
+                            
+                            setState(() {
+                              _pickupAddress = address;
+                              _pickupAddressController.text = address;
+                            });
+                          }
+                        } catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Não foi possível obter sua localização atual'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      },
+                      icon: const Icon(Icons.my_location),
+                      tooltip: 'Usar minha localização atual',
+                      style: IconButton.styleFrom(
+                        backgroundColor: Colors.blue.shade50,
+                        foregroundColor: Colors.blue,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+                // Endereço de entrega
+                Row(
+                  children: [
+                    Expanded(
+                      child: GooglePlaceAutoCompleteTextField(
+                        googleAPIKey: _placesApiKey,
+                        textEditingController: _deliveryAddressController,
+                        inputDecoration: InputDecoration(
+                          labelText: 'Endereço de entrega',
+                          hintText: 'Digite o endereço de entrega',
+                          prefixIcon: const Icon(Icons.location_on_outlined),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        debounceTime: 800,
+                        countries: const ["br"],
+                        isLatLngRequired: true,
+                        getPlaceDetailWithLatLng: (Prediction prediction) {
+                          setState(() {
+                            _deliveryAddress = prediction.description ?? '';
+                          });
+                        },
+                        itemClick: (Prediction prediction) {
+                          setState(() {
+                            _deliveryAddress = prediction.description ?? '';
+                          });
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton(
+                      onPressed: () async {
+                        try {
+                          final position = await Geolocator.getCurrentPosition();
+                          final placemarks = await placemarkFromCoordinates(
+                            position.latitude,
+                            position.longitude,
+                          );
+                          if (placemarks.isNotEmpty) {
+                            final place = placemarks.first;
+                            final address = [
+                              if (place.street?.isNotEmpty ?? false) place.street,
+                              if (place.subLocality?.isNotEmpty ?? false) place.subLocality,
+                              if (place.locality?.isNotEmpty ?? false) place.locality,
+                              if (place.administrativeArea?.isNotEmpty ?? false) place.administrativeArea,
+                            ].where((e) => e != null).join(', ');
+                            
+                            setState(() {
+                              _deliveryAddress = address;
+                              _deliveryAddressController.text = address;
+                            });
+                          }
+                        } catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Não foi possível obter sua localização atual'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      },
+                      icon: const Icon(Icons.my_location),
+                      tooltip: 'Usar minha localização atual',
+                      style: IconButton.styleFrom(
+                        backgroundColor: Colors.blue.shade50,
+                        foregroundColor: Colors.blue,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        // Detalhes da rota
+        if (_routeDistance != null && _routeDuration != null)
+          Card(
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: BorderSide(color: Colors.grey.shade200),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Text(
+                    'Detalhes da rota',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      const Icon(Icons.route, color: Colors.blue),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Distância: $_routeDistance',
+                        style: const TextStyle(fontSize: 14),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      const Icon(Icons.timer, color: Colors.blue),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Duração estimada: $_routeDuration',
+                        style: const TextStyle(fontSize: 14),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
       ],
     );
+  }
+
+  bool _canProceedToNextStep() {
+    switch (_currentStep) {
+      case 0:
+        return _pickupAddress.isNotEmpty && _deliveryAddress.isNotEmpty;
+      case 1:
+        return true;
+      default:
+        return false;
+    }
+  }
+
+  void _nextStep() {
+    if (_currentStep < 1) {
+      setState(() {
+        _currentStep++;
+      });
+    }
+  }
+
+  void _previousStep() {
+    if (_currentStep > 0) {
+      setState(() {
+        _currentStep--;
+      });
+    }
   }
 }
 

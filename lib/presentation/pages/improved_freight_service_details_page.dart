@@ -214,115 +214,108 @@ class _ImprovedFreightServiceDetailsPageState extends State<ImprovedFreightServi
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Detalhes do Serviço'),
-        elevation: 0,
-      ),
-      body: Consumer<FreightRequestController>(
-        builder: (context, controller, child) {
-          return Form(
-            key: _formKey,
-            child: Column(
-              children: [
-                // Indicador de progresso
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  color: Theme.of(context).primaryColor.withOpacity(0.1),
-                  child: Row(
-                    children: [
-                      _buildStepIndicator(0, 'Tipo', Icons.category),
-                      Expanded(
-                        child: Container(
-                          height: 2,
-                          color: _currentStep > 0 
-                            ? Theme.of(context).primaryColor 
-                            : Colors.grey.shade300,
-                        ),
+    return Consumer<FreightRequestController>(
+      builder: (context, controller, child) {
+        return Form(
+          key: _formKey,
+          child: Column(
+            children: [
+              // Indicador de progresso
+              Container(
+                padding: const EdgeInsets.all(16),
+                color: Theme.of(context).primaryColor.withOpacity(0.1),
+                child: Row(
+                  children: [
+                    _buildStepIndicator(0, 'Tipo', Icons.category),
+                    Expanded(
+                      child: Container(
+                        height: 2,
+                        color: _currentStep > 0 
+                          ? Theme.of(context).primaryColor 
+                          : Colors.grey.shade300,
                       ),
-                      _buildStepIndicator(1, 'Detalhes', Icons.info),
-                      Expanded(
-                        child: Container(
-                          height: 2,
-                          color: _currentStep > 1 
-                            ? Theme.of(context).primaryColor 
-                            : Colors.grey.shade300,
-                        ),
-                      ),
-                      _buildStepIndicator(2, 'Fotos', Icons.camera_alt),
-                    ],
-                  ),
-                ),
-                
-                // Conteúdo principal
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (controller.error != null)
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 16),
-                            child: ErrorMessage(
-                              message: controller.error!,
-                              onDismiss: controller.clearError,
-                            ),
-                          ),
-                        if (controller.successMessage != null)
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 16),
-                            child: SuccessMessage(
-                              message: controller.successMessage!,
-                              onDismiss: controller.clearSuccessMessage,
-                            ),
-                          ),
-                        
-                        _buildStepContent(),
-                      ],
                     ),
-                  ),
-                ),
-                
-                // Botões de navegação
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.grey.withOpacity(0.2),
-                        spreadRadius: 1,
-                        blurRadius: 4,
-                        offset: const Offset(0, -2),
+                    _buildStepIndicator(1, 'Detalhes', Icons.info),
+                    Expanded(
+                      child: Container(
+                        height: 2,
+                        color: _currentStep > 1 
+                          ? Theme.of(context).primaryColor 
+                          : Colors.grey.shade300,
                       ),
-                    ],
-                  ),
-                  child: Row(
+                    ),
+                    _buildStepIndicator(2, 'Fotos', Icons.camera_alt),
+                  ],
+                ),
+              ),
+              
+              // Conteúdo principal
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      if (_currentStep > 0)
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: _previousStep,
-                            child: const Text('Voltar'),
+                      if (controller.error != null)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: ErrorMessage(
+                            message: controller.error!,
+                            onDismiss: controller.clearError,
                           ),
                         ),
-                      if (_currentStep > 0) const SizedBox(width: 16),
-                      Expanded(
-                        child: LoadingButton(
-                          text: _currentStep == 2 ? 'Criar Solicitação' : 'Próximo',
-                          onPressed: _canProceedToNextStep() ? _nextStep : null,
-                          isLoading: controller.isLoading,
+                      if (controller.successMessage != null)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: SuccessMessage(
+                            message: controller.successMessage!,
+                            onDismiss: controller.clearSuccessMessage,
+                          ),
                         ),
-                      ),
+                      
+                      _buildStepContent(),
                     ],
                   ),
                 ),
-              ],
-            ),
-          );
-        },
-      ),
+              ),
+              
+              // Botões de navegação
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.2),
+                      spreadRadius: 1,
+                      blurRadius: 4,
+                      offset: const Offset(0, -2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    if (_currentStep > 0)
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: _previousStep,
+                          child: const Text('Voltar'),
+                        ),
+                      ),
+                    if (_currentStep > 0) const SizedBox(width: 16),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: _canProceedToNextStep() ? _nextStep : null,
+                        child: Text(_currentStep == 2 ? 'Finalizar' : 'Próximo'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
