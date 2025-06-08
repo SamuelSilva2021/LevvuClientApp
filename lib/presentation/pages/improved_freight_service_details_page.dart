@@ -19,6 +19,8 @@ class ImprovedFreightServiceDetailsPage extends StatefulWidget {
   final String deliveryAddress;
   final String routeDistance;
   final String routeDuration;
+  final VoidCallback? onServiceTypeChanged;
+  final Function(int)? onStepChanged;
 
   const ImprovedFreightServiceDetailsPage({
     super.key,
@@ -26,13 +28,15 @@ class ImprovedFreightServiceDetailsPage extends StatefulWidget {
     required this.deliveryAddress,
     required this.routeDistance,
     required this.routeDuration,
+    this.onServiceTypeChanged,
+    this.onStepChanged,
   });
 
   @override
-  State<ImprovedFreightServiceDetailsPage> createState() => _ImprovedFreightServiceDetailsPageState();
+  State<ImprovedFreightServiceDetailsPage> createState() => ImprovedFreightServiceDetailsPageState();
 }
 
-class _ImprovedFreightServiceDetailsPageState extends State<ImprovedFreightServiceDetailsPage> {
+class ImprovedFreightServiceDetailsPageState extends State<ImprovedFreightServiceDetailsPage> {
   final _formKey = GlobalKey<FormState>();
   final _descriptionController = TextEditingController();
   final _cargoTypeController = TextEditingController();
@@ -50,7 +54,7 @@ class _ImprovedFreightServiceDetailsPageState extends State<ImprovedFreightServi
   DateTime? _selectedDate;
   final List<CargoItemModel> _cargoItems = [];
   final List<String> _photoUrls = [];
-  int _currentStep = 0;
+  int currentStep = 0;
 
   @override
   void initState() {
@@ -110,8 +114,8 @@ class _ImprovedFreightServiceDetailsPageState extends State<ImprovedFreightServi
     return null;
   }
 
-  bool _canProceedToNextStep() {
-    switch (_currentStep) {
+  bool canProceedToNextStep() {
+    switch (currentStep) {
       case 0:
         return _selectedServiceType != null;
       case 1:
@@ -125,27 +129,30 @@ class _ImprovedFreightServiceDetailsPageState extends State<ImprovedFreightServi
     }
   }
 
-  void _nextStep() {
-    if (_canProceedToNextStep()) {
-      if (_currentStep == 2) {
+  void nextStep() {
+    if (canProceedToNextStep()) {
+      if (currentStep == 2) {
         _showConfirmationDialog();
       } else {
         setState(() {
-          _currentStep++;
+          currentStep++;
         });
+        widget.onStepChanged?.call(currentStep);
       }
     }
   }
 
-  void _previousStep() {
-    if (_currentStep > 0) {
+  void previousStep() {
+    if (currentStep > 0) {
       setState(() {
-        _currentStep--;
+        currentStep--;
       });
+      widget.onStepChanged?.call(currentStep);
     }
   }
 
   Future<void> _showConfirmationDialog() async {
+    if (!mounted) return;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => ConfirmationDialog(
@@ -202,6 +209,7 @@ class _ImprovedFreightServiceDetailsPageState extends State<ImprovedFreightServi
   }
 
   Future<void> _showErrorDialog(String message) async {
+    if (!mounted) return;
     await showDialog(
       context: context,
       builder: (context) => ErrorDialog(
@@ -220,35 +228,6 @@ class _ImprovedFreightServiceDetailsPageState extends State<ImprovedFreightServi
           key: _formKey,
           child: Column(
             children: [
-              // Indicador de progresso
-              Container(
-                padding: const EdgeInsets.all(16),
-                color: Theme.of(context).primaryColor.withOpacity(0.1),
-                child: Row(
-                  children: [
-                    _buildStepIndicator(0, 'Tipo', Icons.category),
-                    Expanded(
-                      child: Container(
-                        height: 2,
-                        color: _currentStep > 0 
-                          ? Theme.of(context).primaryColor 
-                          : Colors.grey.shade300,
-                      ),
-                    ),
-                    _buildStepIndicator(1, 'Detalhes', Icons.info),
-                    Expanded(
-                      child: Container(
-                        height: 2,
-                        color: _currentStep > 1 
-                          ? Theme.of(context).primaryColor 
-                          : Colors.grey.shade300,
-                      ),
-                    ),
-                    _buildStepIndicator(2, 'Fotos', Icons.camera_alt),
-                  ],
-                ),
-              ),
-              
               // Conteúdo principal
               Expanded(
                 child: SingleChildScrollView(
@@ -278,40 +257,6 @@ class _ImprovedFreightServiceDetailsPageState extends State<ImprovedFreightServi
                   ),
                 ),
               ),
-              
-              // Botões de navegação
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.grey.withOpacity(0.2),
-                      spreadRadius: 1,
-                      blurRadius: 4,
-                      offset: const Offset(0, -2),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    if (_currentStep > 0)
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: _previousStep,
-                          child: const Text('Voltar'),
-                        ),
-                      ),
-                    if (_currentStep > 0) const SizedBox(width: 16),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: _canProceedToNextStep() ? _nextStep : null,
-                        child: Text(_currentStep == 2 ? 'Finalizar' : 'Próximo'),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
             ],
           ),
         );
@@ -319,44 +264,8 @@ class _ImprovedFreightServiceDetailsPageState extends State<ImprovedFreightServi
     );
   }
 
-  Widget _buildStepIndicator(int step, String label, IconData icon) {
-    final isActive = _currentStep >= step;
-    final isCompleted = _currentStep > step;
-    
-    return Column(
-      children: [
-        Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: isActive 
-              ? Theme.of(context).primaryColor 
-              : Colors.grey.shade300,
-            shape: BoxShape.circle,
-          ),
-          child: Icon(
-            isCompleted ? Icons.check : icon,
-            color: isActive ? Colors.white : Colors.grey.shade600,
-            size: 20,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-            color: isActive 
-              ? Theme.of(context).primaryColor 
-              : Colors.grey.shade600,
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _buildStepContent() {
-    switch (_currentStep) {
+    switch (currentStep) {
       case 0:
         return _buildServiceTypeStep();
       case 1:
@@ -366,6 +275,13 @@ class _ImprovedFreightServiceDetailsPageState extends State<ImprovedFreightServi
       default:
         return Container();
     }
+  }
+
+  void _onServiceTypeChanged(EServiceTypes? type) {
+    setState(() {
+      _selectedServiceType = type;
+    });
+    widget.onServiceTypeChanged?.call();
   }
 
   Widget _buildServiceTypeStep() {
@@ -391,11 +307,7 @@ class _ImprovedFreightServiceDetailsPageState extends State<ImprovedFreightServi
         
         ImprovedServiceTypeSelector(
           selectedType: _selectedServiceType,
-          onTypeSelected: (type) {
-            setState(() {
-              _selectedServiceType = type;
-            });
-          },
+          onTypeSelected: _onServiceTypeChanged,
         ),
       ],
     );
