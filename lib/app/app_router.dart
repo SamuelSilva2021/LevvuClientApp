@@ -3,12 +3,12 @@ import 'package:levvu_client/core/services/auth/auth_guard.dart';
 import 'package:levvu_client/core/provider/user_provider.dart';
 import 'package:levvu_client/presentation/pages/acesso_negado.dart';
 import 'package:levvu_client/presentation/pages/cadastro_cliente_page.dart';
-import 'package:levvu_client/presentation/pages/freight_request_page.dart';
 import 'package:levvu_client/presentation/pages/historico_fretes_page.dart';
 import 'package:levvu_client/presentation/pages/home_page.dart';
 import 'package:levvu_client/presentation/pages/login_page.dart';
 import 'package:levvu_client/presentation/pages/perfil_usuario_page.dart';
 import 'package:levvu_client/presentation/pages/visualizacao_propostas_page.dart';
+import 'package:levvu_client/presentation/pages/improved_freight_request_page.dart';
 import 'package:provider/provider.dart';
 import 'package:levvu_client/core/constants/asset_constants.dart';
 
@@ -30,7 +30,7 @@ class AppRouter {
       case '/solicitar-frete':
         return MaterialPageRoute(
           builder: (context) => AuthGuard(
-            child: const FreightRequestPage(),
+            child: const ImprovedFreightRequestPage(),
             // Verificar se é cliente
             authorizationCheck: (userProvider) => userProvider.isClientUser,
           ),

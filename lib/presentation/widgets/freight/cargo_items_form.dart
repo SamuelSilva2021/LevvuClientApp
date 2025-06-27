@@ -52,17 +52,10 @@ class _CargoItemsFormState extends State<CargoItemsForm> {
   void _addItem() {
     if (_formKey.currentState?.validate() ?? false) {
       final item = CargoItemModel(
-        name: _nameController.text,
         description: _descriptionController.text,
+        weight: double.parse(_unitWeightController.text) * int.parse(_quantityController.text),
+        volume: double.parse(_unitVolumeController.text) * int.parse(_quantityController.text),
         quantity: int.parse(_quantityController.text),
-        unitWeight: double.parse(_unitWeightController.text),
-        unitVolume: double.parse(_unitVolumeController.text),
-        length: double.parse(_lengthController.text),
-        width: double.parse(_widthController.text),
-        height: double.parse(_heightController.text),
-        isFragile: _isFragile,
-        requiresRefrigeration: _requiresRefrigeration,
-        hazardousMaterial: _hazardousMaterial,
       );
 
       widget.onAddItem(item);
@@ -104,13 +97,6 @@ class _CargoItemsFormState extends State<CargoItemsForm> {
           child: Column(
             children: [
               CustomTextField(
-                controller: _nameController,
-                label: 'Nome do Item',
-                hint: 'Digite o nome do item',
-                validator: widget.validator,
-              ),
-              const SizedBox(height: 16),
-              CustomTextField(
                 controller: _descriptionController,
                 label: 'Descrição',
                 hint: 'Digite a descrição do item',
@@ -142,68 +128,6 @@ class _CargoItemsFormState extends State<CargoItemsForm> {
                 validator: widget.numberValidator,
               ),
               const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: CustomTextField(
-                      controller: _lengthController,
-                      label: 'Comprimento (cm)',
-                      hint: 'Digite o comprimento',
-                      keyboardType: TextInputType.number,
-                      validator: widget.numberValidator,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: CustomTextField(
-                      controller: _widthController,
-                      label: 'Largura (cm)',
-                      hint: 'Digite a largura',
-                      keyboardType: TextInputType.number,
-                      validator: widget.numberValidator,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: CustomTextField(
-                      controller: _heightController,
-                      label: 'Altura (cm)',
-                      hint: 'Digite a altura',
-                      keyboardType: TextInputType.number,
-                      validator: widget.numberValidator,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              CheckboxListTile(
-                title: const Text('Frágil'),
-                value: _isFragile,
-                onChanged: (value) {
-                  setState(() {
-                    _isFragile = value ?? false;
-                  });
-                },
-              ),
-              CheckboxListTile(
-                title: const Text('Requer Refrigeração'),
-                value: _requiresRefrigeration,
-                onChanged: (value) {
-                  setState(() {
-                    _requiresRefrigeration = value ?? false;
-                  });
-                },
-              ),
-              CheckboxListTile(
-                title: const Text('Material Perigoso'),
-                value: _hazardousMaterial,
-                onChanged: (value) {
-                  setState(() {
-                    _hazardousMaterial = value ?? false;
-                  });
-                },
-              ),
-              const SizedBox(height: 16),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -232,8 +156,8 @@ class _CargoItemsFormState extends State<CargoItemsForm> {
               final item = widget.items[index];
               return Card(
                 child: ListTile(
-                  title: Text(item.name),
-                  subtitle: Text(item.description),
+                  title: Text(item.description),
+                  subtitle: Text('Quantidade: ${item.quantity}'),
                   trailing: IconButton(
                     icon: const Icon(Icons.delete),
                     onPressed: () => widget.onRemoveItem(index),

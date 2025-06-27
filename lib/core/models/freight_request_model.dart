@@ -82,7 +82,7 @@ class FreightRequestModel {
       deliveryAddress: json['deliveryAddress'] as String,
       vehicleType: VehicleType.values.firstWhere(
         (type) => type.name == json['vehicleType'],
-        orElse: () => VehicleType.van,
+        orElse: () => VehicleType.moto,
       ),
       serviceType: json['serviceType'] as String,
       description: json['description'] as String,
