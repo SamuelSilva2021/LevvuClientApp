@@ -2,10 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:levvu_client/presentation/widgets/error_dialog.dart';
 import 'package:levvu_client/presentation/pages/improved_freight_service_details_page.dart';
 import 'package:levvu_client/presentation/widgets/freight/modern_route_map.dart';
-import 'package:geolocator/geolocator.dart';
-import 'package:geocoding/geocoding.dart';
-import 'package:google_places_flutter/google_places_flutter.dart';
-import 'package:google_places_flutter/model/prediction.dart';
+import 'package:levvu_client/presentation/widgets/freight/address_picker.dart';
 
 class ImprovedFreightRequestPage extends StatefulWidget {
   const ImprovedFreightRequestPage({super.key});
@@ -26,7 +23,6 @@ class _ImprovedFreightRequestPageState extends State<ImprovedFreightRequestPage>
   int _currentStep = 0;
   String _pickupAddress = '';
   String _deliveryAddress = '';
-  final _placesApiKey = "AIzaSyAwV5JLtIB-MzLA7wKUS1WHijzLIsEhhnM";
 
   @override
   void initState() {
@@ -134,17 +130,13 @@ class _ImprovedFreightRequestPageState extends State<ImprovedFreightRequestPage>
               children: [
                 // Step 1: Endereços
                 SingleChildScrollView(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
                   child: _buildAddressStep(),
                 ),
                 // Step 2: Tipo de Serviço
                 ImprovedFreightServiceDetailsPage(
                   key: _serviceDetailsKey,
-                  pickupAddress: _pickupAddressController.text,
-                  deliveryAddress: _deliveryAddressController.text,
-                  routeDistance: _routeDistance,
-                  routeDuration: _routeDuration,
-                  onServiceTypeChanged: () {
+                  onServiceTypeChanged: (type) {
                     setState(() {}); // Força a reconstrução do widget para atualizar o estado do botão
                   },
                   onStepChanged: (step) {
@@ -263,6 +255,51 @@ class _ImprovedFreightRequestPageState extends State<ImprovedFreightRequestPage>
     );
   }
 
+  Future<void> _showAddressPicker(BuildContext context, TextEditingController controller, Function(String) onAddressSelected) async {
+    await showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.8,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Selecione o endereço',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Flexible(
+                  child: SingleChildScrollView(
+                    child: SizedBox(
+                      height: 300,
+                      child: AddressPicker(
+                        controller: controller,
+                        label: 'Endereço',
+                        hint: 'Digite o endereço',
+                        onAddressSelected: onAddressSelected,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildAddressStep() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -300,190 +337,98 @@ class _ImprovedFreightRequestPageState extends State<ImprovedFreightRequestPage>
           ),
           const SizedBox(height: 24),
 
-          // Formulário de endereços
+          // Card de endereços
           Card(
-            elevation: 0,
+            margin: EdgeInsets.zero,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
-              side: BorderSide(color: Colors.grey.shade200),
             ),
             child: Padding(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(24),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
                     'Endereços',
                     style: TextStyle(
-                      fontSize: 18,
+                      fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 24),
+
                   // Endereço de coleta
                   Row(
                     children: [
                       Expanded(
-                        child: GooglePlaceAutoCompleteTextField(
-                          googleAPIKey: _placesApiKey,
-                          textEditingController: _pickupAddressController,
-                          inputDecoration: InputDecoration(
+                        child: TextFormField(
+                          controller: _pickupAddressController,
+                          readOnly: true,
+                          decoration: InputDecoration(
                             labelText: 'Endereço de coleta',
                             hintText: 'Digite o endereço de coleta',
                             prefixIcon: const Icon(Icons.location_on_outlined),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(color: Colors.grey.shade300),
+                            suffixIcon: IconButton(
+                              icon: const Icon(Icons.my_location),
+                              onPressed: () => _showAddressPicker(
+                                context,
+                                _pickupAddressController,
+                                (address) {
+                                  setState(() {
+                                    _pickupAddress = address;
+                                  });
+                                },
+                              ),
                             ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(color: Colors.grey.shade300),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(color: Theme.of(context).primaryColor),
-                            ),
-                            filled: true,
-                            fillColor: Colors.grey.shade50,
                           ),
-                          debounceTime: 800,
-                          countries: const ["br"],
-                          isLatLngRequired: true,
-                          getPlaceDetailWithLatLng: (Prediction prediction) {
-                            setState(() {
-                              _pickupAddress = prediction.description ?? '';
-                            });
-                          },
-                          itemClick: (Prediction prediction) {
-                            setState(() {
-                              _pickupAddress = prediction.description ?? '';
-                            });
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      IconButton(
-                        onPressed: () async {
-                          try {
-                            final position = await Geolocator.getCurrentPosition();
-                            final placemarks = await placemarkFromCoordinates(
-                              position.latitude,
-                              position.longitude,
-                            );
-                            if (placemarks.isNotEmpty) {
-                              final place = placemarks.first;
-                              final address = [
-                                if (place.street?.isNotEmpty ?? false) place.street,
-                                if (place.subLocality?.isNotEmpty ?? false) place.subLocality,
-                                if (place.locality?.isNotEmpty ?? false) place.locality,
-                                if (place.administrativeArea?.isNotEmpty ?? false) place.administrativeArea,
-                              ].where((e) => e != null).join(', ');
-                              
+                          onTap: () => _showAddressPicker(
+                            context,
+                            _pickupAddressController,
+                            (address) {
                               setState(() {
                                 _pickupAddress = address;
-                                _pickupAddressController.text = address;
                               });
-                            }
-                          } catch (e) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Não foi possível obter sua localização atual'),
-                                backgroundColor: Colors.red,
-                              ),
-                            );
-                          }
-                        },
-                        icon: const Icon(Icons.my_location),
-                        tooltip: 'Usar minha localização atual',
-                        style: IconButton.styleFrom(
-                          backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
-                          foregroundColor: Theme.of(context).primaryColor,
-                          padding: const EdgeInsets.all(12),
+                            },
+                          ),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 24),
 
                   // Endereço de entrega
                   Row(
                     children: [
                       Expanded(
-                        child: GooglePlaceAutoCompleteTextField(
-                          googleAPIKey: _placesApiKey,
-                          textEditingController: _deliveryAddressController,
-                          inputDecoration: InputDecoration(
+                        child: TextFormField(
+                          controller: _deliveryAddressController,
+                          readOnly: true,
+                          decoration: InputDecoration(
                             labelText: 'Endereço de entrega',
                             hintText: 'Digite o endereço de entrega',
                             prefixIcon: const Icon(Icons.location_on_outlined),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(color: Colors.grey.shade300),
+                            suffixIcon: IconButton(
+                              icon: const Icon(Icons.my_location),
+                              onPressed: () => _showAddressPicker(
+                                context,
+                                _deliveryAddressController,
+                                (address) {
+                                  setState(() {
+                                    _deliveryAddress = address;
+                                  });
+                                },
+                              ),
                             ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(color: Colors.grey.shade300),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(color: Theme.of(context).primaryColor),
-                            ),
-                            filled: true,
-                            fillColor: Colors.grey.shade50,
                           ),
-                          debounceTime: 800,
-                          countries: const ["br"],
-                          isLatLngRequired: true,
-                          getPlaceDetailWithLatLng: (Prediction prediction) {
-                            setState(() {
-                              _deliveryAddress = prediction.description ?? '';
-                            });
-                          },
-                          itemClick: (Prediction prediction) {
-                            setState(() {
-                              _deliveryAddress = prediction.description ?? '';
-                            });
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      IconButton(
-                        onPressed: () async {
-                          try {
-                            final position = await Geolocator.getCurrentPosition();
-                            final placemarks = await placemarkFromCoordinates(
-                              position.latitude,
-                              position.longitude,
-                            );
-                            if (placemarks.isNotEmpty) {
-                              final place = placemarks.first;
-                              final address = [
-                                if (place.street?.isNotEmpty ?? false) place.street,
-                                if (place.subLocality?.isNotEmpty ?? false) place.subLocality,
-                                if (place.locality?.isNotEmpty ?? false) place.locality,
-                                if (place.administrativeArea?.isNotEmpty ?? false) place.administrativeArea,
-                              ].where((e) => e != null).join(', ');
-                              
+                          onTap: () => _showAddressPicker(
+                            context,
+                            _deliveryAddressController,
+                            (address) {
                               setState(() {
                                 _deliveryAddress = address;
-                                _deliveryAddressController.text = address;
                               });
-                            }
-                          } catch (e) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Não foi possível obter sua localização atual'),
-                                backgroundColor: Colors.red,
-                              ),
-                            );
-                          }
-                        },
-                        icon: const Icon(Icons.my_location),
-                        tooltip: 'Usar minha localização atual',
-                        style: IconButton.styleFrom(
-                          backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
-                          foregroundColor: Theme.of(context).primaryColor,
-                          padding: const EdgeInsets.all(12),
+                            },
+                          ),
                         ),
                       ),
                     ],
@@ -492,54 +437,6 @@ class _ImprovedFreightRequestPageState extends State<ImprovedFreightRequestPage>
               ),
             ),
           ),
-
-          // Detalhes da rota
-          if (_routeDistance.isNotEmpty && _routeDuration.isNotEmpty)
-            Card(
-              elevation: 0,
-              margin: const EdgeInsets.only(top: 24),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-                side: BorderSide(color: Colors.grey.shade200),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const Text(
-                      'Detalhes da rota',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildRouteInfo(
-                            Icons.route,
-                            'Distância',
-                            _routeDistance,
-                            Theme.of(context).primaryColor,
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: _buildRouteInfo(
-                            Icons.timer,
-                            'Duração estimada',
-                            _routeDuration,
-                            Theme.of(context).primaryColor,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
         ],
       ),
     );

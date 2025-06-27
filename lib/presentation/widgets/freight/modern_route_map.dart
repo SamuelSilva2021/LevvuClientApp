@@ -444,6 +444,7 @@ class _ModernRouteMapState extends State<ModernRouteMap>
 
     // Inicia o timer para atualizar o estilo do mapa a cada minuto
     _styleUpdateTimer = Timer.periodic(const Duration(minutes: 1), (timer) {
+       if (!mounted) return;
       if (_mapController != null) {
         _mapController!.setMapStyle(_getMapStyle());
         setState(() {});
@@ -471,6 +472,7 @@ class _ModernRouteMapState extends State<ModernRouteMap>
   Future<void> _getCurrentLocation() async {
     try {
       final position = await Geolocator.getCurrentPosition();
+      if (!mounted) return;
       setState(() {
         _currentPosition = LatLng(position.latitude, position.longitude);
       });
